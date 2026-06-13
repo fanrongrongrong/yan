@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>记一下</title>
+<style>
+  :root{
+    --bg:#0d0f12;
+    --panel:#15191e;
+    --panel2:#1c2128;
+    --line:#262c34;
+    --ink:#e8eaed;
+    --ink-dim:#8a929c;
+    --ink-faint:#565d66;
+    --ember:#ff6a3d;
+    --ember-soft:#ff8a5c;
+    --ash:#9aa3ad;
+    --good:#5fb878;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{background:var(--bg);color:var(--ink);}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Helvetica Neue",sans-serif;
+    min-height:100vh;
+    padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom);
+    -webkit-font-smoothing:antialiased;
+    overflow-x:hidden;
+  }
+  .wrap{max-width:480px;margin:0 auto;padding:0 20px 40px;}
+
+  /* header */
+  header{padding:26px 0 10px;display:flex;align-items:baseline;justify-content:space-between;}
+  header h1{font-size:17px;font-weight:600;letter-spacing:.5px;color:var(--ink-dim);}
+  header .date{font-size:12px;color:var(--ink-faint);font-variant-numeric:tabular-nums;}
+
+  /* today hero */
+  .hero{
+    background:radial-gradient(120% 120% at 50% 0%, #1a1d22 0%, var(--panel) 55%);
+    border:1px solid var(--line);
+    border-radius:22px;
+    padding:30px 24px 26px;
+    text-align:center;
+    position:relative;
+    overflow:hidden;
+  }
+  .hero .label{font-size:13px;color:var(--ink-faint);letter-spacing:1px;}
+  .hero .count{
+    font-size:84px;font-weight:700;line-height:1;margin:8px 0 2px;
+    font-variant-numeric:tabular-nums;
+    background:linear-gradient(180deg,#fff 0%, #ffb59a 130%);
+    -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
+    transition:transform .12s ease;
+  }
+  .hero .count.bump{transform:scale(1.12);}
+  .hero .unit{font-size:14px;color:var(--ink-dim);}
+  .hero .last{font-size:12px;color:var(--ink-faint);margin-top:14px;min-height:16px;font-variant-numeric:tabular-nums;}
+
+  /* big button */
+  .tapwrap{margin:22px 0 8px;display:flex;flex-direction:column;align-items:center;}
+  .tap{
+    width:160px;height:160px;border-radius:50%;border:none;cursor:pointer;
+    background:radial-gradient(circle at 50% 38%, var(--ember-soft) 0%, var(--ember) 48%, #c8431f 100%);
+    color:#fff;font-size:19px;font-weight:600;letter-spacing:2px;
+    box-shadow:0 0 0 1px rgba(255,138,92,.35), 0 18px 50px -12px rgba(255,106,61,.55), inset 0 2px 8px rgba(255,255,255,.25);
+    display:flex;align-items:center;justify-content:center;flex-direction:column;
+    transition:transform .1s ease, box-shadow .25s ease;
+    position:relative;
+  }
+  .tap:active{transform:scale(.93);box-shadow:0 0 0 1px rgba(255,138,92,.35), 0 8px 24px -8px rgba(255,106,61,.5), inset 0 2px 8px rgba(255,255,255,.2);}
+  .tap .plus{font-size:40px;line-height:1;font-weight:300;}
+  .tap .brandtag{font-size:11px;font-weight:500;letter-spacing:1px;opacity:.92;margin-top:4px;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .ripple{position:absolute;border-radius:50%;background:rgba(255,255,255,.4);transform:scale(0);animation:rip .5s ease-out;pointer-events:none;}
+  @keyframes rip{to{transform:scale(2.4);opacity:0;}}
+  .undo{margin-top:14px;background:none;border:none;color:var(--ink-faint);font-size:13px;padding:8px 16px;cursor:pointer;}
+  .undo:active{color:var(--ash);}
+
+  /* brand selector */
+  .brands{margin-top:22px;}
+  .brands .head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;}
+  .brands .head span{font-size:13px;color:var(--ink-faint);letter-spacing:.5px;}
+  .brands .head button{background:none;border:none;color:var(--ember-soft);font-size:13px;cursor:pointer;padding:4px;}
+  .chips{display:flex;flex-wrap:wrap;gap:8px;}
+  .chip{
+    padding:9px 15px;border-radius:999px;border:1px solid var(--line);
+    background:var(--panel);color:var(--ink-dim);font-size:14px;cursor:pointer;
+    transition:all .15s ease;display:flex;align-items:center;gap:6px;
+  }
+  .chip.active{background:rgba(255,106,61,.14);border-color:var(--ember);color:var(--ember-soft);}
+  .chip .del{color:var(--ink-faint);font-size:15px;line-height:1;margin-left:2px;}
+  .chip.addbtn{border-style:dashed;color:var(--ink-faint);}
+
+  /* stat cards */
+  .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:24px;}
+  .stat{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:14px 10px;text-align:center;}
+  .stat .v{font-size:26px;font-weight:700;font-variant-numeric:tabular-nums;}
+  .stat .k{font-size:11px;color:var(--ink-faint);margin-top:3px;letter-spacing:.5px;}
+
+  /* section */
+  .section{margin-top:28px;}
+  .section .title{font-size:13px;color:var(--ink-faint);letter-spacing:1px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;}
+  .section .title .toggle{display:flex;gap:4px;}
+  .section .title .toggle button{background:var(--panel);border:1px solid var(--line);color:var(--ink-dim);font-size:11px;padding:4px 10px;border-radius:8px;cursor:pointer;}
+  .section .title .toggle button.on{background:rgba(255,106,61,.14);border-color:var(--ember);color:var(--ember-soft);}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:16px 14px;}
+
+  svg{display:block;width:100%;overflow:visible;}
+  .axis{stroke:var(--line);stroke-width:1;}
+  .gridline{stroke:#1e242b;stroke-width:1;}
+  .axislbl{fill:var(--ink-faint);font-size:9px;}
+  .dot{fill:var(--ember);}
+  .linepath{fill:none;stroke:var(--ember);stroke-width:2;stroke-linejoin:round;stroke-linecap:round;}
+  .area{fill:url(#grad);}
+
+  /* hour bars */
+  .hourbars{display:flex;align-items:flex-end;gap:3px;height:90px;}
+  .hourbar{flex:1;background:linear-gradient(180deg,var(--ember-soft),var(--ember));border-radius:3px 3px 0 0;min-height:2px;position:relative;}
+  .hourbar.empty{background:#20262e;}
+  .hourlabels{display:flex;justify-content:space-between;margin-top:6px;}
+  .hourlabels span{font-size:9px;color:var(--ink-faint);}
+
+  /* brand breakdown */
+  .brandrow{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+  .brandrow:last-child{margin-bottom:0;}
+  .brandrow .nm{font-size:13px;width:72px;flex-shrink:0;color:var(--ink-dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .brandrow .track{flex:1;height:8px;background:#20262e;border-radius:4px;overflow:hidden;}
+  .brandrow .fill{height:100%;background:linear-gradient(90deg,var(--ember),var(--ember-soft));border-radius:4px;}
+  .brandrow .n{font-size:12px;color:var(--ink-faint);width:36px;text-align:right;font-variant-numeric:tabular-nums;}
+
+  .empty-note{color:var(--ink-faint);font-size:13px;text-align:center;padding:18px 0;}
+
+  /* log list */
+  .logitem{display:flex;justify-content:space-between;align-items:center;padding:11px 0;border-bottom:1px solid var(--line);font-size:13px;}
+  .logitem:last-child{border-bottom:none;}
+  .logitem .t{color:var(--ink);font-variant-numeric:tabular-nums;}
+  .logitem .b{color:var(--ink-faint);}
+  .logitem .x{color:var(--ink-faint);cursor:pointer;padding:2px 8px;}
+
+  .footer{margin-top:30px;display:flex;gap:10px;}
+  .footer button{flex:1;background:var(--panel);border:1px solid var(--line);color:var(--ink-faint);font-size:12px;padding:11px;border-radius:12px;cursor:pointer;}
+
+  /* modal */
+  .modal{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;z-index:50;padding:24px;}
+  .modal.show{display:flex;}
+  .modal .box{background:var(--panel2);border:1px solid var(--line);border-radius:18px;padding:22px;width:100%;max-width:320px;}
+  .modal .box h3{font-size:16px;margin-bottom:6px;}
+  .modal .box p{font-size:13px;color:var(--ink-dim);margin-bottom:16px;line-height:1.5;}
+  .modal input{width:100%;background:var(--bg);border:1px solid var(--line);color:var(--ink);font-size:15px;padding:12px;border-radius:10px;margin-bottom:16px;}
+  .modal input:focus{outline:none;border-color:var(--ember);}
+  .modal .btns{display:flex;gap:10px;}
+  .modal .btns button{flex:1;padding:11px;border-radius:10px;border:none;font-size:14px;cursor:pointer;}
+  .modal .btns .cancel{background:var(--bg);color:var(--ink-dim);border:1px solid var(--line);}
+  .modal .btns .ok{background:var(--ember);color:#fff;font-weight:600;}
+
+  .toast{position:fixed;bottom:calc(28px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%) translateY(20px);background:var(--panel2);border:1px solid var(--line);color:var(--ink);font-size:13px;padding:10px 18px;border-radius:999px;opacity:0;transition:all .25s ease;z-index:60;pointer-events:none;}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>记一下</h1>
+    <span class="date" id="todayDate"></span>
+  </header>
+
+  <div class="hero">
+    <div class="label">今天</div>
+    <div class="count" id="todayCount">0</div>
+    <div class="unit">根</div>
+    <div class="last" id="lastInfo"></div>
+  </div>
+
+  <div class="tapwrap">
+    <button class="tap" id="tapBtn">
+      <span class="plus">+</span>
+      <span class="brandtag" id="tapBrand">未选牌子</span>
+    </button>
+    <button class="undo" id="undoBtn">↩ 撤销刚才那根</button>
+  </div>
+
+  <div class="brands">
+    <div class="head">
+      <span>当前牌子</span>
+      <button id="editBrands">编辑</button>
+    </div>
+    <div class="chips" id="brandChips"></div>
+  </div>
+
+  <div class="stats">
+    <div class="stat"><div class="v" id="stWeek">0</div><div class="k">近7天</div></div>
+    <div class="stat"><div class="v" id="stAvg">0</div><div class="k">日均</div></div>
+    <div class="stat"><div class="v" id="stTotal">0</div><div class="k">累计</div></div>
+  </div>
+
+  <div class="section">
+    <div class="title">
+      <span>趋势</span>
+      <div class="toggle" id="rangeToggle">
+        <button data-r="7" class="on">7天</button>
+        <button data-r="30">30天</button>
+        <button data-r="90">90天</button>
+      </div>
+    </div>
+    <div class="card">
+      <svg id="trendChart" viewBox="0 0 320 150" preserveAspectRatio="none" style="height:150px"></svg>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="title"><span>一天里的分布（累计）</span></div>
+    <div class="card">
+      <div class="hourbars" id="hourBars"></div>
+      <div class="hourlabels"><span>0</span><span>6</span><span>12</span><span>18</span><span>23</span></div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="title"><span>各牌子（累计）</span></div>
+    <div class="card" id="brandBreakdown"></div>
+  </div>
+
+  <div class="section">
+    <div class="title"><span>今日明细</span></div>
+    <div class="card" id="todayLog"></div>
+  </div>
+
+  <div class="footer">
+    <button id="exportBtn">导出数据</button>
+    <button id="importBtn">导入数据</button>
+  </div>
+</div>
+
+<div class="modal" id="brandModal">
+  <div class="box">
+    <h3>加个牌子</h3>
+    <p>输入烟的牌子名，比如 中华、利群、黄鹤楼。</p>
+    <input id="brandInput" type="text" placeholder="牌子名" maxlength="12">
+    <div class="btns">
+      <button class="cancel" id="brandCancel">取消</button>
+      <button class="ok" id="brandOk">添加</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="importModal">
+  <div class="box">
+    <h3>导入数据</h3>
+    <p>把之前导出的内容粘进来，会覆盖现在的记录。</p>
+    <input id="importInput" type="text" placeholder="粘贴数据">
+    <div class="btns">
+      <button class="cancel" id="importCancel">取消</button>
+      <button class="ok" id="importOk">覆盖导入</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const KEY='smoke_log_v1';
+const BKEY='smoke_brands_v1';
+const ACTKEY='smoke_active_v1';
+
+let state = load(KEY, []);          // [{ts: epoch_ms, brand: '中华'}]
+let brands = load(BKEY, ['默认']);
+let active = load(ACTKEY, brands[0] || '默认');
+let editMode = false;
+let range = 7;
+
+function load(k, def){ try{ const v=localStorage.getItem(k); return v?JSON.parse(v):def; }catch(e){ return def; } }
+function save(){ localStorage.setItem(KEY,JSON.stringify(state)); localStorage.setItem(BKEY,JSON.stringify(brands)); localStorage.setItem(ACTKEY,JSON.stringify(active)); }
+
+function dayStr(ts){ const d=new Date(ts); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+function todayStr(){ return dayStr(Date.now()); }
+function timeStr(ts){ const d=new Date(ts); return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0'); }
+
+function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(t._tm); t._tm=setTimeout(()=>t.classList.remove('show'),1600); }
+
+function add(){
+  state.push({ts:Date.now(), brand:active});
+  save(); render();
+  const c=document.getElementById('todayCount'); c.classList.remove('bump'); void c.offsetWidth; c.classList.add('bump');
+  if(navigator.vibrate) navigator.vibrate(15);
+}
+function undo(){
+  if(!state.length){ toast('没有可撤销的'); return; }
+  const today = state.filter(s=>dayStr(s.ts)===todayStr());
+  if(!today.length){ toast('今天还没记呢'); return; }
+  // remove last by ts
+  let maxIdx=-1, maxTs=-1;
+  state.forEach((s,i)=>{ if(s.ts>maxTs){maxTs=s.ts;maxIdx=i;} });
+  state.splice(maxIdx,1); save(); render(); toast('撤了一根');
+}
+
+function render(){
+  const today = state.filter(s=>dayStr(s.ts)===todayStr());
+  document.getElementById('todayCount').textContent = today.length;
+  document.getElementById('todayDate').textContent = todayStr().slice(5).replace('-','/') + ' ' + ['周日','周一','周二','周三','周四','周五','周六'][new Date().getDay()];
+
+  // last info
+  if(today.length){
+    const last = today.reduce((a,b)=>a.ts>b.ts?a:b);
+    const mins = Math.floor((Date.now()-last.ts)/60000);
+    const ago = mins<1?'刚刚':mins<60?mins+'分钟前':Math.floor(mins/60)+'小时前';
+    document.getElementById('lastInfo').textContent = '上一根 '+timeStr(last.ts)+' · '+ago+' · '+last.brand;
+  } else document.getElementById('lastInfo').textContent='今天还没记';
+
+  // active brand tag on button
+  document.getElementById('tapBrand').textContent = active;
+
+  // brand chips
+  const chips=document.getElementById('brandChips'); chips.innerHTML='';
+  brands.forEach(b=>{
+    const el=document.createElement('div'); el.className='chip'+(b===active?' active':'');
+    el.innerHTML='<span>'+b+'</span>'+(editMode&&brands.length>1?'<span class="del">×</span>':'');
+    el.querySelector('span').onclick=()=>{ active=b; save(); render(); };
+    if(editMode&&brands.length>1){ el.querySelector('.del').onclick=(e)=>{ e.stopPropagation(); brands=brands.filter(x=>x!==b); if(active===b)active=brands[0]; save(); render(); }; }
+    chips.appendChild(el);
+  });
+  const addc=document.createElement('div'); addc.className='chip addbtn'; addc.textContent='+ 加牌子';
+  addc.onclick=()=>openBrandModal(); chips.appendChild(addc);
+
+  // stats
+  const total=state.length;
+  const week = state.filter(s=> (Date.now()-s.ts) < 7*864e5 ).length;
+  const days = new Set(state.map(s=>dayStr(s.ts))).size || 1;
+  document.getElementById('stWeek').textContent=week;
+  document.getElementById('stAvg').textContent=(total/days).toFixed(1);
+  document.getElementById('stTotal').textContent=total;
+
+  drawTrend(); drawHours(); drawBrands(); drawLog();
+}
+
+function drawTrend(){
+  const svg=document.getElementById('trendChart');
+  const W=320,H=150, padL=22,padB=18,padT=10,padR=6;
+  const days=[];
+  for(let i=range-1;i>=0;i--){ const d=new Date(); d.setHours(0,0,0,0); d.setDate(d.getDate()-i); days.push(d); }
+  const counts=days.map(d=>{ const ds=dayStr(d.getTime()); return state.filter(s=>dayStr(s.ts)===ds).length; });
+  const max=Math.max(5,...counts);
+  const plotW=W-padL-padR, plotH=H-padT-padB;
+  const x=i=>padL + (counts.length<=1?plotW/2: i/(counts.length-1)*plotW);
+  const y=v=>padT + plotH - (v/max)*plotH;
+
+  let grid='';
+  for(let g=0;g<=2;g++){ const v=max*g/2; const yy=y(v); grid+=`<line class="gridline" x1="${padL}" y1="${yy}" x2="${W-padR}" y2="${yy}"/><text class="axislbl" x="2" y="${yy+3}">${Math.round(v)}</text>`; }
+
+  let pts=counts.map((c,i)=>`${x(i)},${y(c)}`).join(' ');
+  let areaPath = counts.length>1 ? `M${x(0)},${y(counts[0])} `+counts.map((c,i)=>`L${x(i)},${y(c)}`).join(' ')+` L${x(counts.length-1)},${y(0)} L${x(0)},${y(0)} Z` : '';
+  let line = counts.length>1 ? `M`+counts.map((c,i)=>`${x(i)},${y(c)}`).join(' L') : '';
+
+  // x labels: show a few
+  let xlbl='';
+  const step = range<=7?1:range<=30?5:15;
+  days.forEach((d,i)=>{ if(i%step===0 || i===days.length-1){ xlbl+=`<text class="axislbl" x="${x(i)}" y="${H-4}" text-anchor="middle">${d.getMonth()+1}/${d.getDate()}</text>`; }});
+
+  let dots = range<=30 ? counts.map((c,i)=>`<circle class="dot" cx="${x(i)}" cy="${y(c)}" r="${range<=7?3:2}"/>`).join('') : '';
+
+  svg.innerHTML=`<defs><linearGradient id="grad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#ff6a3d" stop-opacity="0.35"/><stop offset="100%" stop-color="#ff6a3d" stop-opacity="0"/></linearGradient></defs>
+    ${grid}
+    ${areaPath?`<path class="area" d="${areaPath}"/>`:''}
+    ${line?`<path class="linepath" d="${line}"/>`:''}
+    ${dots}
+    ${xlbl}`;
+}
+
+function drawHours(){
+  const box=document.getElementById('hourBars'); box.innerHTML='';
+  const buckets=new Array(24).fill(0);
+  state.forEach(s=>buckets[new Date(s.ts).getHours()]++);
+  const max=Math.max(1,...buckets);
+  buckets.forEach((v,h)=>{
+    const bar=document.createElement('div');
+    bar.className='hourbar'+(v===0?' empty':'');
+    bar.style.height=(v/max*100)+'%';
+    bar.title=h+'时: '+v+'根';
+    box.appendChild(bar);
+  });
+}
+
+function drawBrands(){
+  const box=document.getElementById('brandBreakdown');
+  const map={};
+  state.forEach(s=>{ map[s.brand]=(map[s.brand]||0)+1; });
+  const arr=Object.entries(map).sort((a,b)=>b[1]-a[1]);
+  if(!arr.length){ box.innerHTML='<div class="empty-note">还没有记录</div>'; return; }
+  const max=arr[0][1];
+  box.innerHTML=arr.map(([n,c])=>`<div class="brandrow"><div class="nm">${n}</div><div class="track"><div class="fill" style="width:${c/max*100}%"></div></div><div class="n">${c}</div></div>`).join('');
+}
+
+function drawLog(){
+  const box=document.getElementById('todayLog');
+  const today=state.map((s,i)=>({...s,i})).filter(s=>dayStr(s.ts)===todayStr()).sort((a,b)=>b.ts-a.ts);
+  if(!today.length){ box.innerHTML='<div class="empty-note">今天还没记录</div>'; return; }
+  box.innerHTML=today.map(s=>`<div class="logitem"><span class="t">${timeStr(s.ts)}</span><span class="b">${s.brand}</span><span class="x" data-ts="${s.ts}">删</span></div>`).join('');
+  box.querySelectorAll('.x').forEach(el=>el.onclick=()=>{ const ts=+el.dataset.ts; const idx=state.findIndex(s=>s.ts===ts); if(idx>=0){state.splice(idx,1);save();render();toast('删了一条');} });
+}
+
+// brand modal
+function openBrandModal(){ document.getElementById('brandModal').classList.add('show'); const inp=document.getElementById('brandInput'); inp.value=''; setTimeout(()=>inp.focus(),100); }
+function closeBrandModal(){ document.getElementById('brandModal').classList.remove('show'); }
+document.getElementById('brandOk').onclick=()=>{ const v=document.getElementById('brandInput').value.trim(); if(!v){toast('名字别空着');return;} if(brands.includes(v)){toast('已经有这个牌子了');active=v;} else {brands.push(v);active=v;} save();render();closeBrandModal(); };
+document.getElementById('brandCancel').onclick=closeBrandModal;
+
+// edit toggle
+document.getElementById('editBrands').onclick=()=>{ editMode=!editMode; document.getElementById('editBrands').textContent=editMode?'完成':'编辑'; render(); };
+
+// range toggle
+document.getElementById('rangeToggle').addEventListener('click',e=>{ if(e.target.tagName==='BUTTON'){ range=+e.target.dataset.r; document.querySelectorAll('#rangeToggle button').forEach(b=>b.classList.toggle('on',b===e.target)); drawTrend(); } });
+
+// main buttons
+const tapBtn=document.getElementById('tapBtn');
+tapBtn.addEventListener('click',e=>{
+  const r=document.createElement('span'); r.className='ripple';
+  const rect=tapBtn.getBoundingClientRect(); const size=Math.max(rect.width,rect.height);
+  r.style.width=r.style.height=size+'px';
+  r.style.left=(e.clientX-rect.left-size/2)+'px'; r.style.top=(e.clientY-rect.top-size/2)+'px';
+  tapBtn.appendChild(r); setTimeout(()=>r.remove(),500);
+  add();
+});
+document.getElementById('undoBtn').onclick=undo;
+
+// export / import
+document.getElementById('exportBtn').onclick=()=>{
+  const data=JSON.stringify({state,brands,active});
+  navigator.clipboard?.writeText(data).then(()=>toast('已复制到剪贴板')).catch(()=>{ prompt('复制下面的数据保存好：',data); });
+};
+document.getElementById('importBtn').onclick=()=>{ document.getElementById('importModal').classList.add('show'); document.getElementById('importInput').value=''; };
+document.getElementById('importCancel').onclick=()=>document.getElementById('importModal').classList.remove('show');
+document.getElementById('importOk').onclick=()=>{
+  try{ const d=JSON.parse(document.getElementById('importInput').value.trim()); if(d.state&&d.brands){ state=d.state; brands=d.brands; active=d.active||brands[0]; save(); render(); document.getElementById('importModal').classList.remove('show'); toast('导入成功'); } else toast('数据格式不对'); }
+  catch(e){ toast('解析失败，检查下数据'); }
+};
+
+// refresh "ago" each minute
+setInterval(()=>{ if(state.filter(s=>dayStr(s.ts)===todayStr()).length) render(); },60000);
+
+render();
+</script>
+</body>
+</html>
