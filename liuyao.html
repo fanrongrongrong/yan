@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>六爻</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  html{background:#15120d}
+  body{
+    background:#15120d;color:#ece3d0;font-family:"Noto Serif SC",serif;font-weight:400;
+    min-height:100vh;display:flex;flex-direction:column;align-items:center;
+    padding:48px 22px 60px;overflow-x:hidden;position:relative;
+  }
+  /* 顶部暖光，让深底有层次 */
+  .glow{position:fixed;inset:0;pointer-events:none;z-index:0;
+    background:radial-gradient(130% 70% at 50% -10%, rgba(201,163,92,.14) 0%, transparent 55%)}
+  .head,.stage,.toss-btn,.progress,.gua-wrap,.result,.hint{position:relative;z-index:1}
+
+  .head{display:flex;flex-direction:column;align-items:center;margin-bottom:44px}
+  .title{font-size:42px;font-weight:300;letter-spacing:.42em;text-indent:.42em;color:#e9c87e}
+  .rule{width:28px;height:1px;background:#d2553f;margin:18px 0 11px}
+  .sub{font-size:11px;font-weight:300;color:#a8997a;letter-spacing:.6em;text-indent:.6em}
+
+  .stage{width:100%;max-width:360px;height:112px;display:flex;justify-content:center;
+    align-items:center;gap:26px;margin-bottom:30px}
+  .coin{width:60px;height:60px;display:block}
+  .coin svg{width:100%;height:100%;display:block;filter:drop-shadow(0 4px 8px rgba(0,0,0,.5))}
+  .coin.tossing{animation:toss .6s ease-in-out}
+  @keyframes toss{
+    0%{transform:translateY(0) rotateX(0)}
+    25%{transform:translateY(-54px) rotateX(360deg)}
+    50%{transform:translateY(-68px) rotateX(720deg)}
+    75%{transform:translateY(-54px) rotateX(1080deg)}
+    100%{transform:translateY(0) rotateX(1440deg)}
+  }
+
+  .toss-btn{font-family:"Noto Serif SC",serif;font-weight:500;
+    background:linear-gradient(180deg,#c8492f,#a4351f);color:#fbeede;
+    border:1px solid #e08a6f;font-size:16px;letter-spacing:.5em;text-indent:.5em;
+    padding:14px 46px;border-radius:3px;cursor:pointer;
+    box-shadow:0 6px 18px rgba(178,52,34,.4);transition:filter .2s,transform .08s}
+  .toss-btn:active{transform:translateY(1px);filter:brightness(1.08)}
+  .toss-btn:disabled{background:#4a4136;border-color:#4a4136;color:#9a8f7a;box-shadow:none;cursor:default}
+
+  .progress{font-size:11px;font-weight:300;color:#a8997a;letter-spacing:.28em;
+    margin:24px 0 6px;min-height:16px;text-align:center}
+
+  .gua-wrap{display:flex;gap:54px;justify-content:center;margin-top:14px;flex-wrap:wrap}
+  .gua-col{display:flex;flex-direction:column-reverse;align-items:center;gap:13px}
+  .gua-label{order:1;margin-top:14px;font-size:10px;font-weight:300;color:#a8997a;
+    letter-spacing:.4em;text-indent:.4em}
+  .yao{width:110px;height:12px;display:flex;justify-content:space-between;align-items:center;
+    position:relative;animation:yaoIn .45s ease}
+  .yao .bar{height:12px;border-radius:1px;
+    background:linear-gradient(180deg,#e7d6a6,#cbb277);
+    box-shadow:0 1px 3px rgba(0,0,0,.45)}
+  .yao.yang .bar{width:100%}
+  .yao.yin .bar{width:42%}
+  .yao .mark{position:absolute;right:-23px;font-size:13px;color:#e06a52;font-weight:700}
+  @keyframes yaoIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1}}
+
+  .result{width:100%;max-width:360px;margin-top:34px;text-align:center;display:none}
+  .result.show{display:block;animation:fade .7s ease}
+  @keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1}}
+  .seal-name{font-size:30px;font-weight:400;letter-spacing:.12em;color:#e9c87e;margin-bottom:6px}
+  .names{font-size:12.5px;font-weight:300;color:#c3b694;letter-spacing:.12em;margin-bottom:18px}
+  .divider{width:26px;height:1px;background:#5c513f;margin:0 auto 18px}
+  .result p{font-size:13px;font-weight:300;line-height:2.1;color:#cabd9b;margin-bottom:4px;letter-spacing:.04em}
+  .tag{color:#a8997a}
+  .note{font-size:11.5px;color:#9a8f74;margin-top:8px;line-height:1.9}
+  .reset{margin-top:24px;background:transparent;border:1px solid #6b5f49;color:#d8c89e;
+    font-family:inherit;font-size:12px;font-weight:300;letter-spacing:.4em;text-indent:.4em;
+    cursor:pointer;border-radius:30px;padding:9px 22px;transition:all .2s}
+  .reset:active{background:rgba(201,163,92,.14);border-color:#c9a35c}
+  .hint{font-size:10.5px;font-weight:300;color:#8a7f68;text-align:center;
+    margin-top:44px;max-width:340px;line-height:2}
+</style>
+</head>
+<body>
+  <div class="glow"></div>
+
+  <div class="head">
+    <div class="title">六爻</div>
+    <div class="rule"></div>
+    <div class="sub">铜钱起卦</div>
+  </div>
+
+  <div class="stage" id="stage">
+    <div class="coin" id="c0"></div>
+    <div class="coin" id="c1"></div>
+    <div class="coin" id="c2"></div>
+  </div>
+
+  <button class="toss-btn" id="tossBtn" type="button">投 钱</button>
+  <div class="progress" id="progress">初爻 · 凡六变（自下而上）</div>
+
+  <div class="gua-wrap">
+    <div class="gua-col" id="benGua"><div class="gua-label">本卦</div></div>
+    <div class="gua-col" id="bianGua" style="display:none"><div class="gua-label">变卦</div></div>
+  </div>
+
+  <div class="result" id="result"></div>
+
+  <div class="hint">三钱掷之，背为阳、字为阴。一背少阳，二背少阴，三背老阳为变，三字老阴为变。六变成卦，自下而上。<br>聊以遣兴，信则有，不信则无。</div>
+
+<script>
+(function(){
+  "use strict";
+  function coinSVG(isBack){
+    var gold="#cBA35c".replace("B","b"); // 笔误保险
+    gold="#c9a35c";
+    var disc="#241f17";
+    var chars=isBack?"":'<text x="50" y="22" text-anchor="middle" font-size="15" fill="'+gold+'" font-family="serif">乾</text><text x="50" y="91" text-anchor="middle" font-size="15" fill="'+gold+'" font-family="serif">隆</text><text x="20" y="57" text-anchor="middle" font-size="13" fill="'+gold+'" font-family="serif">宝</text><text x="80" y="57" text-anchor="middle" font-size="13" fill="'+gold+'" font-family="serif">通</text>';
+    var decor=isBack?'<line x1="50" y1="11" x2="50" y2="34" stroke="'+gold+'" stroke-width="1.6"/><line x1="50" y1="66" x2="50" y2="89" stroke="'+gold+'" stroke-width="1.6"/><line x1="11" y1="50" x2="34" y2="50" stroke="'+gold+'" stroke-width="1.6"/><line x1="66" y1="50" x2="89" y2="50" stroke="'+gold+'" stroke-width="1.6"/>':"";
+    return '<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><circle cx="50" cy="50" r="46" fill="'+disc+'" stroke="'+gold+'" stroke-width="2.4"/><circle cx="50" cy="50" r="41" fill="none" stroke="'+gold+'" stroke-width="0.8" opacity="0.5"/>'+decor+chars+'<rect x="39" y="39" width="22" height="22" rx="1.5" fill="#15120d" stroke="'+gold+'" stroke-width="2.2"/></svg>';
+  }
+  var FRONT=coinSVG(false), BACK=coinSVG(true);
+  var coinEls=[];
+  for(var i=0;i<3;i++){var e=document.getElementById("c"+i);if(e){e.innerHTML=FRONT;coinEls.push(e);}}
+
+  var trigrams={"111":{n:"乾",s:"\u2630"},"000":{n:"坤",s:"\u2637"},"100":{n:"震",s:"\u2633"},"010":{n:"坎",s:"\u2635"},"001":{n:"艮",s:"\u2636"},"011":{n:"巽",s:"\u2634"},"101":{n:"离",s:"\u2632"},"110":{n:"兑",s:"\u2631"}};
+  var sixtyfour={"乾乾":"乾为天","坤坤":"坤为地","坎坎":"坎为水","离离":"离为火","震震":"震为雷","艮艮":"艮为山","巽巽":"巽为风","兑兑":"兑为泽","坤乾":"地天泰","乾坤":"天地否","坎乾":"水天需","乾坎":"天水讼","坤坎":"地水师","坎坤":"水地比","巽乾":"风天小畜","兑乾":"泽天夬","乾兑":"天泽履","坤兑":"地泽临","巽兑":"风泽中孚","震兑":"雷泽归妹","兑坤":"泽地萃","坤震":"地雷复","震坤":"雷地豫","坎震":"水雷屯","震坎":"雷水解","艮震":"山雷颐","震艮":"雷山小过","巽坎":"风水涣","坎巽":"水风井","艮坎":"山水蒙","坎艮":"水山蹇","离乾":"火天大有","乾离":"天火同人","震乾":"雷天大壮","乾震":"天雷无妄","巽坤":"风地观","坤巽":"地风升","离坤":"火地晋","坤离":"地火明夷","巽震":"风雷益","震巽":"雷风恒","兑震":"泽雷随","震离":"雷火丰","离震":"火雷噬嗑","艮乾":"山天大畜","乾艮":"天山遁","兑离":"泽火革","离兑":"火泽睽","离巽":"火风鼎","巽离":"风火家人","兑坎":"泽水困","坎离":"水火既济","离坎":"火水未济","兑艮":"泽山咸","艮兑":"山泽损","巽艮":"风山渐","艮巽":"山风蛊","离艮":"火山旅","艮离":"山火贲","兑巽":"泽风大过","坎兑":"水泽节","艮坤":"山地剥","坤艮":"地山谦"};
+  var ORD=["初","二","三","四","五","上"];
+  var yaos=[];
+  var tossBtn=document.getElementById("tossBtn");
+  var progress=document.getElementById("progress");
+
+  function toss(){
+    if(yaos.length>=6) return;
+    tossBtn.disabled=true;
+    var coins=[];
+    for(var j=0;j<3;j++) coins.push(Math.random()<0.5?1:0);
+    var back=0; for(var k=0;k<3;k++) back+=coins[k];
+    var type,moving=false;
+    if(back===3){type=1;moving=true;}
+    else if(back===0){type=0;moving=true;}
+    else if(back===1){type=1;}
+    else{type=0;}
+
+    for(var c=0;c<3;c++){
+      (function(idx){
+        var el=coinEls[idx];
+        el.classList.remove("tossing");
+        void el.offsetWidth;
+        el.classList.add("tossing");
+        setTimeout(function(){ el.innerHTML = coins[idx]===1 ? BACK : FRONT; }, 300);
+      })(c);
+    }
+
+    setTimeout(function(){
+      for(var m=0;m<3;m++) coinEls[m].classList.remove("tossing");
+      yaos.push({type:type,moving:moving});
+      renderBen();
+      if(yaos.length<6){
+        progress.textContent=ORD[yaos.length]+"爻 · 凡六变（自下而上）";
+        tossBtn.disabled=false;
+      }else{
+        progress.textContent="六变已成";
+        tossBtn.style.display="none";
+        finish();
+      }
+    },620);
+  }
+
+  function yaoEl(y){
+    var d=document.createElement("div");
+    d.className="yao "+(y.type===1?"yang":"yin");
+    d.innerHTML=y.type===1?'<div class="bar"></div>':'<div class="bar"></div><div class="bar"></div>';
+    if(y.moving){var mk=document.createElement("div");mk.className="mark";mk.textContent=y.type===1?"\u25cb":"\u00d7";d.appendChild(mk);}
+    return d;
+  }
+  function clearYao(col){var n=col.querySelectorAll(".yao");for(var i=0;i<n.length;i++)n[i].parentNode.removeChild(n[i]);}
+  function renderBen(){
+    var col=document.getElementById("benGua");clearYao(col);
+    for(var i=0;i<yaos.length;i++) col.insertBefore(yaoEl(yaos[i]),col.firstChild);
+  }
+  function guaName(arr){
+    var lower="",upper="";
+    for(var i=0;i<3;i++) lower+=arr[i].type;
+    for(var j=3;j<6;j++) upper+=arr[j].type;
+    var lo=trigrams[lower],up=trigrams[upper];
+    return {name:(sixtyfour[up.n+lo.n]||(up.n+"上"+lo.n+"下")),lo:lo,up:up};
+  }
+  function finish(){
+    var ben=guaName(yaos);
+    var moving=[];for(var i=0;i<yaos.length;i++) if(yaos[i].moving) moving.push(i);
+    var h='<div class="seal-name">'+ben.name+'</div>';
+    h+='<div class="names">'+ben.up.s+' '+ben.up.n+'\u3000\u00b7\u3000'+ben.lo.s+' '+ben.lo.n+'</div>';
+    h+='<div class="divider"></div>';
+    if(moving.length){
+      var bianArr=[];
+      for(var b=0;b<yaos.length;b++) bianArr.push(yaos[b].moving?{type:(yaos[b].type===1?0:1),moving:false}:{type:yaos[b].type,moving:false});
+      var bian=guaName(bianArr);
+      var mtxt=[];for(var t=0;t<moving.length;t++) mtxt.push(ORD[moving[t]]+"爻");
+      h+='<p><span class="tag">动爻　</span>'+mtxt.join("、")+'</p>';
+      h+='<p><span class="tag">变卦　</span>'+bian.name+'</p>';
+      h+='<p class="note">老阴老阳为动，老变少不变；本卦既动，当观变卦及动爻之机。</p>';
+      var bg=document.getElementById("bianGua");bg.style.display="flex";clearYao(bg);
+      for(var x=0;x<bianArr.length;x++) bg.insertBefore(yaoEl(bianArr[x]),bg.firstChild);
+    }else{
+      h+='<p class="note">六爻皆静，无变。以本卦卦辞断之。</p>';
+    }
+    h+='<button class="reset" type="button" id="resetBtn">再起一卦</button>';
+    var r=document.getElementById("result");r.innerHTML=h;r.classList.add("show");
+    document.getElementById("resetBtn").addEventListener("click",reset);
+  }
+  function reset(){
+    yaos=[];
+    clearYao(document.getElementById("benGua"));
+    var bg=document.getElementById("bianGua");clearYao(bg);bg.style.display="none";
+    document.getElementById("result").classList.remove("show");
+    progress.textContent="初爻 · 凡六变（自下而上）";
+    tossBtn.style.display="";tossBtn.disabled=false;
+    for(var i=0;i<3;i++) coinEls[i].innerHTML=FRONT;
+  }
+  tossBtn.addEventListener("click",toss);
+})();
+</script>
+</body>
+</html>
