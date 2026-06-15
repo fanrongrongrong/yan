@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>斗狗叫 · WOOF-OFF</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none;font-family:'Arial Black','Helvetica Neue',-apple-system,sans-serif;}
+  html,body{width:100%;height:100%;overflow:hidden;background:#14101f;color:#fff;touch-action:manipulation;}
+  #app{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;text-align:center;overflow:hidden;}
+  .scene{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;padding:22px;}
+  .scene.on{display:flex;}
+  h1{font-size:42px;font-weight:900;letter-spacing:2px;line-height:0.95;color:#ff2d7e;text-shadow:0 0 24px #ff2d7e88,4px 4px 0 #14101f;}
+  h1 .y{color:#ffe14d;text-shadow:0 0 24px #ffe14d88,4px 4px 0 #14101f;}
+  .sub{font-size:12px;letter-spacing:5px;color:#9a8fc0;margin-top:8px;font-weight:bold;}
+  .paws{font-size:30px;margin:14px 0;letter-spacing:6px;}
+  .q{font-size:14px;color:#c9c0e0;margin:18px 0 12px;letter-spacing:1px;font-weight:bold;}
+  .row{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;}
+  .pick{width:64px;height:64px;border-radius:18px;background:#1f1830;border:3px solid #3a2f52;color:#fff;font-size:26px;font-weight:900;}
+  .pick:active{transform:scale(.92);} .pick.sel{border-color:#ffe14d;background:#2a2140;box-shadow:0 0 18px #ffe14d66;color:#ffe14d;}
+  .names{display:flex;flex-direction:column;gap:10px;width:min(320px,86vw);margin-top:6px;}
+  .nrow{display:flex;align-items:center;gap:10px;}
+  .nrow .dot{font-size:22px;}
+  input{flex:1;background:#1f1830;border:2px solid #3a2f52;border-radius:12px;color:#fff;font-size:17px;font-weight:bold;padding:11px 14px;outline:none;font-family:-apple-system,sans-serif;}
+  input:focus{border-color:#2ee6d6;}
+  .btn{pointer-events:auto;border:none;border-radius:16px;font-weight:900;letter-spacing:2px;color:#14101f;padding:16px 40px;font-size:19px;background:linear-gradient(180deg,#ffe14d,#ffb01f);box-shadow:0 6px 0 #a36a00,0 0 22px #ffe14d55;margin-top:22px;}
+  .btn:active{transform:translateY(4px);box-shadow:0 2px 0 #a36a00;}
+  .btn.pink{background:linear-gradient(180deg,#ff5e9e,#ff2d7e);box-shadow:0 6px 0 #a3004a,0 0 22px #ff2d7e66;color:#fff;}
+  .btn.ghost{background:#1f1830;color:#c9c0e0;box-shadow:0 4px 0 #0c0a14;border:2px solid #3a2f52;font-size:15px;padding:13px 28px;}
+  .note{font-size:10.5px;color:#6b6090;margin-top:18px;line-height:1.7;max-width:330px;letter-spacing:.5px;font-weight:bold;}
+  .note b{color:#ff8db8;}
+  /* turn ready */
+  #turnName{font-size:30px;font-weight:900;color:#2ee6d6;text-shadow:0 0 20px #2ee6d688;margin-bottom:2px;}
+  #turnSub{font-size:13px;color:#9a8fc0;letter-spacing:2px;margin-bottom:26px;font-weight:bold;}
+  .howlbtn{pointer-events:auto;width:200px;height:200px;border-radius:50%;border:none;background:radial-gradient(circle at 50% 38%,#ff5e9e,#ff2d7e 60%,#c2185b);box-shadow:0 0 0 8px #ff2d7e22,0 0 50px #ff2d7e88,inset 0 -10px 30px #00000055;color:#fff;font-size:22px;font-weight:900;letter-spacing:2px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;}
+  .howlbtn:active{transform:scale(.95);} .howlbtn .e{font-size:62px;line-height:1;}
+  /* countdown */
+  #cd{font-size:160px;font-weight:900;color:#ffe14d;text-shadow:0 0 40px #ffe14daa;}
+  /* recording */
+  #recName{position:absolute;top:8%;font-size:22px;font-weight:900;color:#fff;letter-spacing:1px;text-shadow:0 0 14px #ff2d7e;}
+  #core{width:230px;height:230px;border-radius:50%;background:radial-gradient(circle at 50% 40%,#ffe14d,#ff2d7e 65%);display:flex;align-items:center;justify-content:center;font-size:96px;will-change:transform;box-shadow:0 0 60px #ff2d7e;}
+  #ringwrap{position:relative;width:300px;height:300px;display:flex;align-items:center;justify-content:center;}
+  #timerRing{position:absolute;inset:0;transform:rotate(-90deg);}
+  #liveScore{margin-top:18px;font-size:15px;color:#ffe14d;letter-spacing:3px;font-weight:900;}
+  #liveScore b{font-size:34px;color:#fff;display:block;text-shadow:0 0 16px #ffe14d;}
+  #meter{position:absolute;right:18px;top:14%;bottom:14%;width:30px;border-radius:16px;background:#1f1830;border:2px solid #3a2f52;overflow:hidden;}
+  #meterFill{position:absolute;left:0;right:0;bottom:0;height:0%;background:linear-gradient(0deg,#2ee6d6,#ffe14d 55%,#ff2d7e);border-radius:14px;}
+  #flash{position:absolute;inset:0;background:radial-gradient(circle,#ff2d7e44,transparent 70%);opacity:0;pointer-events:none;}
+  /* results */
+  #board{display:flex;flex-direction:column;gap:10px;width:min(360px,90vw);margin-top:10px;}
+  .res{display:flex;align-items:center;gap:12px;background:#1f1830;border:2px solid #3a2f52;border-radius:14px;padding:12px 16px;}
+  .res .rk{font-size:20px;font-weight:900;width:30px;color:#6b6090;}
+  .res .rn{flex:1;text-align:left;font-size:17px;font-weight:900;}
+  .res .rs{font-size:18px;font-weight:900;color:#ffe14d;}
+  .res.win{border-color:#ffe14d;background:linear-gradient(90deg,#2a2140,#3a2f10);box-shadow:0 0 22px #ffe14d44;}
+  .res.win .rk{color:#ffe14d;}
+  #champ{font-size:15px;color:#ffe14d;letter-spacing:2px;font-weight:900;margin-bottom:4px;}
+  #champ .big{font-size:30px;display:block;margin-top:4px;color:#fff;text-shadow:0 0 18px #ffe14d;}
+  .confetti{position:absolute;font-size:24px;pointer-events:none;will-change:transform;}
+  #permName{font-size:18px;}
+  .err{color:#ff8db8;font-weight:bold;font-size:13px;line-height:1.7;max-width:320px;margin-top:10px;}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- LOBBY -->
+  <div class="scene on" id="lobby">
+    <h1>斗狗叫<br><span class="y">WOOF-OFF</span></h1>
+    <div class="sub">谁叫得最响最久 · 称王</div>
+    <div class="paws">🐕 🐶 🦮 🐩</div>
+    <div class="q">几只狗上场?</div>
+    <div class="row" id="countRow"></div>
+    <div class="names" id="names"></div>
+    <button class="btn pink" id="goBtn" style="opacity:.45;pointer-events:none">开始斗叫</button>
+    <div class="note">规则：每只狗 <b>3 秒</b>，只许狗叫🐕（汪、嗷、呜都行），比这 3 秒里又响又久的总能量。<br>⚠️ 需要麦克风：请用 <b>Safari 打开</b> 并点「允许」，App 内嵌小窗用不了麦。</div>
+  </div>
+
+  <!-- TURN READY -->
+  <div class="scene" id="ready">
+    <div id="turnName">🐕</div>
+    <div id="turnSub">准备好就开嚎</div>
+    <button class="howlbtn" id="howlBtn"><span class="e">🐕</span><span>开 嚎</span></button>
+    <div class="note" id="readyHint">点一下 → 3 秒倒数 → 拼命叫 3 秒</div>
+    <div class="err" id="micErr" style="display:none"></div>
+  </div>
+
+  <!-- COUNTDOWN -->
+  <div class="scene" id="count"><div id="cd">3</div><div class="sub">深吸一口气…</div></div>
+
+  <!-- RECORDING -->
+  <div class="scene" id="rec">
+    <div id="recName">🐕</div>
+    <div id="ringwrap">
+      <svg id="timerRing" viewBox="0 0 100 100"><circle cx="50" cy="50" r="46" fill="none" stroke="#3a2f52" stroke-width="5"/><circle id="timerArc" cx="50" cy="50" r="46" fill="none" stroke="#ffe14d" stroke-width="5" stroke-linecap="round" stroke-dasharray="289" stroke-dashoffset="0"/></svg>
+      <div id="core">🐕</div>
+    </div>
+    <div id="liveScore">本局能量<b>0</b></div>
+    <div id="meter"><div id="meterFill"></div></div>
+    <div id="flash"></div>
+  </div>
+
+  <!-- RESULTS -->
+  <div class="scene" id="result">
+    <div id="champ"></div>
+    <div id="board"></div>
+    <div class="row" style="margin-top:20px">
+      <button class="btn" id="againBtn">再来一轮</button>
+      <button class="btn ghost" id="homeBtn">回大厅</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+const scenes={lobby:$('lobby'),ready:$('ready'),count:$('count'),rec:$('rec'),result:$('result')};
+function show(name){for(const k in scenes)scenes[k].classList.toggle('on',k===name);}
+
+let numPlayers=0, players=[], idx=0;
+const DOGS=['🐕','🐶','🦮','🐩','🐺','🐾'];
+
+// ---- lobby: pick count ----
+const countRow=$('countRow');
+[2,3,4].forEach(n=>{const b=document.createElement('button');b.className='pick';b.textContent=n;b.onclick=()=>{numPlayers=n;[...countRow.children].forEach(c=>c.classList.remove('sel'));b.classList.add('sel');buildNames(n);};countRow.appendChild(b);});
+
+function buildNames(n){
+  const wrap=$('names');wrap.innerHTML='';
+  for(let i=0;i<n;i++){
+    const row=document.createElement('div');row.className='nrow';
+    row.innerHTML=`<span class="dot">${DOGS[i]}</span><input maxlength="8" placeholder="${i+1}号狗" value="">`;
+    wrap.appendChild(row);
+  }
+  $('goBtn').style.opacity='1';$('goBtn').style.pointerEvents='auto';
+}
+
+$('goBtn').onclick=()=>{
+  const inputs=$('names').querySelectorAll('input');
+  players=[];inputs.forEach((inp,i)=>players.push({name:(inp.value.trim()||(i+1)+'号狗'),dog:DOGS[i],score:0}));
+  idx=0;beginTurn();
+};
+
+// ---- per turn ----
+function beginTurn(){
+  const p=players[idx];
+  $('turnName').textContent=`${p.dog} ${p.name}`;
+  $('turnSub').textContent=`第 ${idx+1} / ${players.length} 位上场`;
+  $('howlBtn').querySelector('.e').textContent=p.dog;
+  $('micErr').style.display='none';
+  show('ready');
+}
+
+// ---- mic ----
+let AC=null, analyser=null, data=null, micReady=false;
+async function getMic(){
+  if(micReady)return true;
+  try{
+    const stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false}});
+    AC=new(window.AudioContext||window.webkitAudioContext)();
+    if(AC.state==='suspended')await AC.resume();
+    const src=AC.createMediaStreamSource(stream);
+    analyser=AC.createAnalyser();analyser.fftSize=1024;
+    data=new Uint8Array(analyser.fftSize);
+    src.connect(analyser);
+    micReady=true;return true;
+  }catch(e){
+    $('micErr').style.display='block';
+    $('micErr').innerHTML='🚫 拿不到麦克风。<br>请用 <b>Safari 打开本页</b> 并允许麦克风权限，再试。<br>（App 内嵌预览窗无法使用麦克风）';
+    return false;
+  }
+}
+function level(){ // 0..1 instantaneous loudness (RMS)
+  analyser.getByteTimeDomainData(data);
+  let sum=0;for(let i=0;i<data.length;i++){const v=(data[i]-128)/128;sum+=v*v;}
+  const rms=Math.sqrt(sum/data.length);
+  return Math.min(1,rms*3.2); // scale so normal shout ~0.6-0.9
+}
+
+$('howlBtn').onclick=async()=>{
+  const ok=await getMic();if(!ok)return;
+  runCountdown();
+};
+
+function runCountdown(){
+  show('count');let n=3;$('cd').textContent=n;
+  const iv=setInterval(()=>{n--;if(n<=0){clearInterval(iv);record();}else{$('cd').textContent=n;}},800);
+}
+
+const REC_MS=3000, ARC_LEN=289;
+function record(){
+  show('rec');const p=players[idx];
+  $('recName').textContent=`${p.dog} ${p.name}`;$('core').textContent=p.dog;
+  let energy=0,peak=0,start=performance.now(),last=start;
+  const core=$('core'),mf=$('meterFill'),ls=$('liveScore').querySelector('b'),arc=$('timerArc'),flash=$('flash'),app=$('app');
+  function frame(now){
+    const dt=now-last;last=now;const el=now-start;
+    const lv=level();
+    energy+=lv*dt;if(lv>peak)peak=lv;
+    // visuals
+    const sc=1+lv*1.3;core.style.transform=`scale(${sc})`;
+    core.style.filter=`drop-shadow(0 0 ${10+lv*40}px #ffe14d)`;
+    mf.style.height=(lv*100)+'%';
+    flash.style.opacity=lv*0.9;
+    const sh=lv*16;app.style.transform=`translate(${(Math.random()-.5)*sh}px,${(Math.random()-.5)*sh}px)`;
+    ls.textContent=Math.round(energy/30);
+    arc.style.strokeDashoffset=ARC_LEN*(el/REC_MS);
+    if(el<REC_MS)requestAnimationFrame(frame);
+    else finishTurn(energy,peak);
+  }
+  requestAnimationFrame(frame);
+}
+
+function finishTurn(energy,peak){
+  $('app').style.transform='';$('flash').style.opacity=0;$('core').style.transform='';
+  players[idx].score=Math.round(energy/30);
+  players[idx].peak=Math.round(peak*100);
+  idx++;
+  if(idx<players.length)beginTurn();
+  else showResult();
+}
+
+// ---- results ----
+function showResult(){
+  show('result');
+  const sorted=[...players].sort((a,b)=>b.score-a.score);
+  const win=sorted[0];
+  $('champ').innerHTML=`👑 汪 界 之 王 👑<span class="big">${win.dog} ${win.name}</span>`;
+  const board=$('board');board.innerHTML='';
+  const medals=['🥇','🥈','🥉','4️⃣','5️⃣','6️⃣'];
+  sorted.forEach((p,i)=>{
+    const row=document.createElement('div');row.className='res'+(i===0?' win':'');
+    row.innerHTML=`<span class="rk">${medals[i]||(i+1)}</span><span class="rn">${p.dog} ${p.name}</span><span class="rs">${p.score}</span>`;
+    board.appendChild(row);
+  });
+  burstConfetti();
+}
+
+$('againBtn').onclick=()=>{players.forEach(p=>{p.score=0;});idx=0;beginTurn();};
+$('homeBtn').onclick=()=>{show('lobby');};
+
+// ---- confetti (paws) ----
+function burstConfetti(){
+  const em=['🐾','⭐','🦴','🎉','👑'];
+  for(let i=0;i<26;i++){
+    const c=document.createElement('div');c.className='confetti';c.textContent=em[i%em.length];
+    c.style.left=Math.random()*100+'vw';c.style.top='-40px';
+    document.body.appendChild(c);
+    const dx=(Math.random()-.5)*200, dur=1400+Math.random()*1400, rot=(Math.random()-.5)*720;
+    c.animate([{transform:`translate(0,0) rotate(0)`,opacity:1},{transform:`translate(${dx}px,${innerHeight+80}px) rotate(${rot}deg)`,opacity:1}],{duration:dur,easing:'cubic-bezier(.3,.7,.5,1)'});
+    setTimeout(()=>c.remove(),dur);
+  }
+}
+</script>
+</body>
+</html>
