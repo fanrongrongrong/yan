@@ -1,0 +1,1146 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#0C0E1C">
+<title>贤者时间</title>
+<style>
+:root{
+  --bg:#0C0E1C;
+  --bg2:#131629;
+  --card:#1A1E36;
+  --card2:#232842;
+  --paper:#EDEFF9;
+  --dim:#8E94B8;
+  --faint:#4E5478;
+  --moon:#DCE2F5;
+  --violet:#8B94E8;
+  --violet2:#A8AFFF;
+  --star:#E8C77B;
+  --red:#E87A8A;
+  --green:#8CBFA8;
+  --line:rgba(237,239,249,.08);
+  --r:20px;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{
+  background:
+    radial-gradient(1100px 500px at 50% -180px, rgba(139,148,232,.14), transparent 62%),
+    radial-gradient(700px 400px at -5% 105%, rgba(232,199,123,.05), transparent 60%),
+    var(--bg);
+  color:var(--paper);
+  font-family:-apple-system,"PingFang SC","HarmonyOS Sans SC","Noto Sans SC",sans-serif;
+  max-width:480px;margin:0 auto;
+  padding:max(14px,env(safe-area-inset-top)) 16px calc(26px + env(safe-area-inset-bottom));
+  overscroll-behavior:none;user-select:none;-webkit-user-select:none;
+  position:relative;overflow-x:hidden;
+}
+.num{font-variant-numeric:tabular-nums;font-feature-settings:"tnum"}
+
+/* ---------- 星空 ---------- */
+.sky{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden}
+.sky i{position:absolute;width:2px;height:2px;border-radius:50%;background:#CBD3F0;opacity:.5;
+  animation:tw var(--d,3s) ease-in-out var(--dl,0s) infinite}
+.sky i.big{width:3px;height:3px;background:var(--star);opacity:.6}
+@keyframes tw{0%,100%{opacity:.15;transform:scale(1)}50%{opacity:.7;transform:scale(1.3)}}
+main{position:relative;z-index:1}
+
+/* ---------- header ---------- */
+header{display:flex;align-items:baseline;justify-content:space-between;padding:6px 2px 8px}
+h1{font-family:"Songti SC","Noto Serif SC",Georgia,serif;font-size:24px;font-weight:900;letter-spacing:.1em}
+h1 em{font-style:normal;background:linear-gradient(180deg,#DCE2F5,#8B94E8);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.hRight{display:flex;align-items:center;gap:10px}
+#headDate{font-size:12px;color:var(--dim);text-align:right;line-height:1.6}
+#headDate b{color:var(--violet2);font-weight:700}
+#eyeBtn{background:var(--card);border:1px solid var(--line);border-radius:99px;color:var(--dim);font-size:14px;padding:6px 11px;cursor:pointer}
+#eyeBtn.on{color:var(--violet2);border-color:rgba(139,148,232,.5)}
+
+/* ---------- 隐私模糊 ---------- */
+body.privacy .pv{filter:blur(5px);transition:filter .2s}
+body.privacy .pv:active{filter:none}
+
+/* ---------- hero：月亮 ---------- */
+.hero{position:relative;padding:4px 0 2px;text-align:center}
+.hero .bigN{font-family:"Songti SC","Noto Serif SC",Georgia,serif;font-size:60px;font-weight:900;line-height:1;
+  background:linear-gradient(180deg,#F4F6FF,#B9C1F0);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.hero .bigK{font-size:12px;color:var(--dim);letter-spacing:.3em;text-indent:.3em;margin-top:5px}
+
+.moonWrap{position:relative;width:180px;height:180px;margin:16px auto 2px}
+#moonBtn{
+  position:relative;width:156px;height:156px;margin:12px;border-radius:50%;border:none;cursor:pointer;
+  background:
+    radial-gradient(circle at 34% 30%, rgba(255,255,255,.9) 0 4%, transparent 5%),
+    radial-gradient(circle at 62% 58%, rgba(120,128,170,.35) 0 9%, transparent 10%),
+    radial-gradient(circle at 40% 66%, rgba(120,128,170,.3) 0 6%, transparent 7%),
+    radial-gradient(circle at 70% 30%, rgba(120,128,170,.28) 0 5%, transparent 6%),
+    radial-gradient(circle at 26% 48%, rgba(120,128,170,.22) 0 4%, transparent 5%),
+    radial-gradient(circle at 55% 82%, rgba(120,128,170,.2) 0 4%, transparent 5%),
+    radial-gradient(circle at 42% 40%, #F6F8FF 0%, #DCE2F5 45%, #AEB7E0 80%, #8B94C8 100%);
+  box-shadow:0 0 34px 6px rgba(180,190,240,.28), 0 0 90px 20px rgba(139,148,232,.14), 0 14px 44px rgba(0,0,0,.5);
+  animation:moonBreathe 4.2s ease-in-out infinite;
+  transition:transform .12s ease;touch-action:manipulation;
+  display:flex;align-items:center;justify-content:center;
+}
+#moonBtn:active{transform:scale(.94)}
+@keyframes moonBreathe{
+  0%,100%{box-shadow:0 0 28px 5px rgba(180,190,240,.22),0 0 80px 16px rgba(139,148,232,.1),0 14px 44px rgba(0,0,0,.5)}
+  50%{box-shadow:0 0 42px 9px rgba(180,190,240,.38),0 0 110px 26px rgba(139,148,232,.2),0 14px 44px rgba(0,0,0,.5)}
+}
+#moonBtn span{font-size:14px;font-weight:800;letter-spacing:.3em;text-indent:.3em;color:#3B4066;opacity:.85}
+.ripple{position:absolute;inset:0;border-radius:50%;border:2px solid rgba(180,190,240,.6);pointer-events:none;opacity:0}
+@keyframes rip{0%{transform:scale(.85);opacity:.8}100%{transform:scale(1.5);opacity:0}}
+.ripple.go{animation:rip .8s ease-out forwards}
+.spark{position:absolute;width:4px;height:4px;border-radius:50%;background:var(--star);pointer-events:none;left:50%;top:50%}
+@keyframes sp{0%{transform:translate(-50%,-50%) scale(1);opacity:1}100%{transform:translate(calc(-50% + var(--sx)),calc(-50% + var(--sy))) scale(.2);opacity:0}}
+.spark.go{animation:sp .8s ease-out forwards}
+
+.hero .tapTip{margin-top:12px;font-size:12px;color:var(--dim);letter-spacing:.04em;min-height:17px}
+.hero .tapTip b{color:var(--violet2);font-weight:700}
+.sageBar{display:inline-flex;align-items:center;gap:6px;margin-top:10px;font-size:12px;color:var(--dim);
+  background:var(--card);border:1px solid var(--line);border-radius:99px;padding:7px 14px}
+.sageBar b{color:var(--star);font-weight:800}
+
+#undoBar{display:none;margin:9px auto 0;font-size:13px;color:var(--dim);background:var(--card);border:1px solid var(--line);border-radius:99px;padding:7px 15px;align-items:center;gap:10px;width:fit-content}
+#undoBar button{background:none;border:none;color:var(--violet2);font-size:13px;font-weight:800;cursor:pointer}
+
+/* ---------- today strip ---------- */
+.today{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:14px}
+.tcell{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:13px 6px;text-align:center;position:relative;overflow:hidden}
+.tcell::after{content:"";position:absolute;inset:0;background:linear-gradient(160deg,rgba(255,255,255,.03),transparent 40%);pointer-events:none}
+.tcell .v{font-size:22px;font-weight:800}
+.tcell .v small{font-size:12px;font-weight:600;color:var(--dim);margin-left:2px}
+.tcell .k{font-size:11px;color:var(--dim);margin-top:3px;letter-spacing:.08em}
+.tcell.hot .v{background:linear-gradient(180deg,#F4F6FF,#A8AFFF);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.tcell.gold .v{color:var(--star)}
+.pop{animation:pop .35s cubic-bezier(.3,1.6,.5,1)}
+@keyframes pop{0%{transform:scale(1.35)}100%{transform:scale(1)}}
+
+/* ---------- tabs ---------- */
+.tabs{display:flex;gap:3px;margin:16px 0 12px;background:var(--bg2);border-radius:15px;padding:4px;border:1px solid var(--line)}
+.tab{flex:1;text-align:center;padding:9px 0;font-size:13px;font-weight:600;color:var(--dim);border-radius:11px;cursor:pointer;transition:all .15s}
+.tab.on{background:var(--card2);color:var(--paper);box-shadow:0 2px 10px rgba(0,0,0,.35)}
+.panel{display:none}
+.panel.on{display:block;animation:fadeUp .25s ease}
+@keyframes fadeUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:16px;margin-bottom:12px;position:relative;overflow:hidden}
+.card::after{content:"";position:absolute;inset:0;background:linear-gradient(160deg,rgba(255,255,255,.025),transparent 35%);pointer-events:none}
+.card h3{font-size:12px;font-weight:800;color:var(--dim);letter-spacing:.16em;margin-bottom:12px}
+.card h3 span{float:right;font-weight:500;letter-spacing:.02em;color:var(--faint)}
+.card h3 em{font-style:normal;color:var(--violet2)}
+.card .inner{position:relative;z-index:1}
+
+.bigline{display:flex;align-items:baseline;gap:13px;margin-bottom:10px;flex-wrap:wrap}
+.bigline .n{font-size:36px;font-weight:900;font-family:"Songti SC","Noto Serif SC",Georgia,serif}
+.bigline .n em{font-style:normal;font-size:14px;font-weight:600;color:var(--dim);margin-left:3px;font-family:-apple-system,sans-serif}
+.bigline .sub{font-size:12px;color:var(--dim);line-height:1.7}
+.bigline .sub b{color:var(--violet2);font-weight:700}
+.trend-up{color:var(--red)!important}
+.trend-down{color:var(--green)!important}
+
+.statgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.sg{background:var(--bg2);border:1px solid var(--line);border-radius:14px;padding:12px}
+.sg .v{font-size:18px;font-weight:800}
+.sg .v small{font-size:11px;color:var(--dim);font-weight:600;margin-left:2px}
+.sg .k{font-size:11px;color:var(--dim);margin-top:3px}
+.sg.wide{grid-column:1/-1}
+.sg .v.gold{color:var(--star)}
+.sg .v.vio{color:var(--violet2)}
+
+svg{display:block;width:100%}
+.axis{font-size:9px;fill:var(--faint)}
+.barlab{font-size:9px;fill:var(--dim);font-weight:700}
+
+/* ---------- heatmap ---------- */
+.heat{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}
+.heat .wd{font-size:10px;color:var(--faint);text-align:center;padding-bottom:2px}
+.hcell{aspect-ratio:1;border-radius:7px;background:rgba(237,239,249,.05);display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--faint)}
+.hcell.l1{background:rgba(139,148,232,.22);color:#B4BAE8}
+.hcell.l2{background:rgba(139,148,232,.4);color:#CBD1F5}
+.hcell.l3{background:rgba(139,148,232,.62);color:#E8EBFF}
+.hcell.l4{background:linear-gradient(135deg,#A8AFFF,#6F79D9);color:#FFF;font-weight:700}
+.hcell.today{outline:2px solid var(--star);outline-offset:1px}
+.hcell.future{opacity:.28}
+.heatLegend{display:flex;align-items:center;gap:5px;justify-content:flex-end;margin-top:10px;font-size:10px;color:var(--faint)}
+.heatLegend i{width:12px;height:12px;border-radius:4px}
+
+/* ---------- 分类/条形 ---------- */
+.brow{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--line)}
+.brow:last-child{border-bottom:none}
+.brow .name{font-size:14px;font-weight:600;flex:0 0 auto;min-width:56px}
+.brow .name small{display:block;font-size:10px;color:var(--faint);font-weight:500}
+.brow .bar{flex:1;height:8px;border-radius:99px;background:var(--bg2);overflow:hidden}
+.brow .bar i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,#8B94E8,#A8AFFF)}
+.brow .bar i.gold{background:linear-gradient(90deg,#C9A85C,#E8C77B)}
+.brow .cnt{flex:0 0 auto;font-size:13px;font-weight:700;color:var(--dim);min-width:48px;text-align:right}
+
+.tagCloud{display:flex;flex-wrap:wrap;gap:7px}
+.tg{background:var(--bg2);border:1px solid var(--line);border-radius:99px;padding:6px 12px;font-size:12px;color:var(--dim)}
+.tg b{color:var(--violet2);font-weight:700;margin-left:4px}
+.tg.hot{border-color:rgba(232,199,123,.45);color:var(--star)}
+.tg.hot b{color:var(--star)}
+
+.empty{font-size:13px;color:var(--faint);padding:4px 0;line-height:1.7}
+
+/* ---------- history ---------- */
+.hrow{display:flex;align-items:center;gap:8px;padding:10px 2px;border-bottom:1px solid var(--line);font-size:14px}
+.hrow:last-child{border-bottom:none}
+.hrow .t{color:var(--dim);font-size:12px;min-width:86px;flex:0 0 auto}
+.hrow .cbadge{flex:0 0 auto;font-size:10px;font-weight:700;padding:3px 8px;border-radius:99px;background:rgba(139,148,232,.16);color:var(--violet2)}
+.hrow .cbadge.c片{background:rgba(232,199,123,.14);color:var(--star)}
+.hrow .cbadge.c韩漫{background:rgba(140,191,168,.14);color:var(--green)}
+.hrow .cbadge.c本子{background:rgba(232,122,138,.13);color:var(--red)}
+.hrow .b{flex:1;font-weight:500;font-size:12.5px;color:var(--dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hrow .b b{color:var(--paper);font-weight:600}
+.hrow .del{background:none;border:none;color:var(--faint);font-size:17px;cursor:pointer;padding:4px 8px;flex:0 0 auto}
+.more{width:100%;background:none;border:none;color:var(--violet2);font-size:13px;font-weight:700;padding:10px 0 2px;cursor:pointer}
+
+/* ---------- 成就 ---------- */
+.badges{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.badge{background:var(--bg2);border:1px solid var(--line);border-radius:14px;padding:11px 12px;display:flex;gap:9px;align-items:center}
+.badge .emo{font-size:22px;filter:grayscale(1);opacity:.35}
+.badge .tx{flex:1}
+.badge .nm{font-size:13px;font-weight:700;color:var(--faint)}
+.badge .ds{font-size:10px;color:var(--faint);margin-top:2px;line-height:1.4}
+.badge.got{border-color:rgba(139,148,232,.4);background:linear-gradient(135deg,#202440,#1A1E36)}
+.badge.got .emo{filter:none;opacity:1}
+.badge.got .nm{color:var(--violet2)}
+.badge.got .ds{color:var(--dim)}
+
+/* ---------- data ---------- */
+.iorow{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.iobtn{background:var(--card2);border:1px solid var(--line);border-radius:14px;color:var(--paper);font-size:13px;font-weight:600;padding:13px 0;cursor:pointer;letter-spacing:.04em}
+.iobtn:active{transform:scale(.97)}
+.iobtn.danger{color:#D98A96;border-color:rgba(232,122,138,.25)}
+.iobtn.wide{grid-column:1/-1;background:linear-gradient(135deg,#2B3055,#20244A);color:#C3CAFF;border-color:rgba(139,148,232,.4)}
+.tip{font-size:11px;color:var(--faint);margin-top:10px;line-height:1.8}
+
+/* ---------- sheet ---------- */
+.mask{position:fixed;inset:0;background:rgba(0,0,0,.62);display:none;z-index:9;backdrop-filter:blur(3px)}
+.mask.on{display:block}
+.sheet{position:fixed;left:50%;bottom:0;transform:translate(-50%,105%);width:100%;max-width:480px;background:var(--bg2);border-radius:24px 24px 0 0;padding:20px 18px calc(26px + env(safe-area-inset-bottom));z-index:10;transition:transform .28s cubic-bezier(.32,.72,.3,1);border-top:1px solid var(--line);max-height:84vh;overflow-y:auto}
+.sheet.on{transform:translate(-50%,0)}
+.sheet h2{font-size:16px;font-weight:800;margin-bottom:14px}
+.sheet input{width:100%;background:var(--card);border:1px solid var(--line);border-radius:12px;color:var(--paper);font-size:15px;padding:12px 14px;outline:none;color-scheme:dark}
+.sheet input:focus{border-color:rgba(139,148,232,.55)}
+.srow{display:flex;gap:10px;margin-top:16px}
+.sbtn{flex:1;border:none;border-radius:12px;padding:13px 0;font-size:14px;font-weight:800;cursor:pointer}
+.sbtn.pri{background:linear-gradient(135deg,#7A84E0,#5A64C4);color:#F2F4FF;box-shadow:0 4px 18px rgba(139,148,232,.3)}
+.sbtn.sec{background:var(--card);color:var(--dim);border:1px solid var(--line)}
+.catRow{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.cat{padding:9px 16px;border-radius:99px;font-size:14px;font-weight:700;background:var(--card);color:var(--dim);border:1px solid var(--line);cursor:pointer}
+.cat.on{background:linear-gradient(135deg,#2B3055,#232852);color:#C3CAFF;border-color:rgba(139,148,232,.55)}
+.fgroup{margin-top:10px}
+.fgroup .fl{font-size:12px;color:var(--dim);margin-bottom:7px}
+.sugRow{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.sug{padding:5px 11px;border-radius:99px;font-size:12px;background:var(--card);color:var(--dim);border:1px solid var(--line);cursor:pointer}
+.sug.on{color:var(--violet2);border-color:rgba(139,148,232,.5)}
+.timeRow{margin-top:12px;display:none}
+.timeRow.on{display:block}
+
+#toast{position:fixed;left:50%;bottom:calc(94px + env(safe-area-inset-bottom));transform:translateX(-50%) translateY(20px);background:#2A2F52;color:var(--paper);font-size:13px;font-weight:600;padding:10px 18px;border-radius:99px;opacity:0;transition:all .25s ease;z-index:20;pointer-events:none;border:1px solid var(--line);box-shadow:0 6px 26px rgba(0,0,0,.45);white-space:nowrap}
+#toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="sky" id="sky"></div>
+<main>
+
+<header>
+  <h1>贤<em>者</em>时间</h1>
+  <div class="hRight">
+    <div id="headDate" class="num"></div>
+    <button id="eyeBtn" title="隐私模糊">👁</button>
+  </div>
+</header>
+
+<div class="hero">
+  <div class="bigN num" id="bigN">0</div>
+  <div class="bigK">今 日 次 数</div>
+  <div class="moonWrap">
+    <div class="ripple" id="ripple"></div>
+    <button id="moonBtn"><span>记一次</span></button>
+  </div>
+  <div class="tapTip" id="hint">点月亮 · 打开记录</div>
+  <div class="sageBar" id="sageBar" style="display:none">🧘 贤者时间已持续 <b class="num" id="sageT">—</b></div>
+  <div id="undoBar"><span id="undoTxt"></span><button id="undoBtn">撤销</button></div>
+</div>
+
+<div class="today">
+  <div class="tcell hot"><div class="v num" id="tWeek">0</div><div class="k">本周</div></div>
+  <div class="tcell"><div class="v num" id="tMonth">0</div><div class="k">本月</div></div>
+  <div class="tcell gold"><div class="v num" id="tAvgGap">—</div><div class="k">平均间隔</div></div>
+</div>
+
+<div class="tabs">
+  <div class="tab on" data-p="stat">统计</div>
+  <div class="tab" data-p="taste">品味</div>
+  <div class="tab" data-p="year">年报</div>
+  <div class="tab" data-p="badge">成就</div>
+  <div class="tab" data-p="data">数据</div>
+</div>
+
+<!-- 统计 -->
+<div class="panel on" id="p-stat">
+  <div class="card">
+    <h3>周汇总 <span id="weekRange" class="num"></span></h3>
+    <div class="bigline">
+      <div class="n num" id="weekTotal">0<em>次</em></div>
+      <div class="sub num">日均 <b id="weekAvg">0</b> · 较上周 <b id="weekDiff">—</b>（上周 <span id="weekPrev">0</span>）</div>
+    </div>
+    <svg id="weekChart" viewBox="0 0 340 150"></svg>
+  </div>
+  <div class="card">
+    <h3>月汇总 <span id="monthName" class="num"></span></h3>
+    <div class="bigline">
+      <div class="n num" id="monthTotal">0<em>次</em></div>
+      <div class="sub num">日均 <b id="monthAvg">0</b> · 较上月 <b id="monthDiff">—</b>（上月 <span id="monthPrev">0</span>）</div>
+    </div>
+    <div class="heat" id="heatmap"></div>
+    <div class="heatLegend">少 <i style="background:rgba(237,239,249,.05)"></i><i style="background:rgba(139,148,232,.22)"></i><i style="background:rgba(139,148,232,.4)"></i><i style="background:rgba(139,148,232,.62)"></i><i style="background:linear-gradient(135deg,#A8AFFF,#6F79D9)"></i> 多</div>
+  </div>
+  <div class="card">
+    <h3>时段分布 <span>全部记录 · 你的高峰期</span></h3>
+    <svg id="hourChart" viewBox="0 0 340 110"></svg>
+  </div>
+</div>
+
+<!-- 品味 -->
+<div class="panel" id="p-taste">
+  <div class="card">
+    <h3>类型占比 <span>全部记录</span></h3>
+    <div id="catBars"></div>
+  </div>
+  <div class="card">
+    <h3>片的来源 <span>推特 vs 电报</span></h3>
+    <div id="srcBars"></div>
+  </div>
+  <div class="card">
+    <h3>本子标签榜 <span>点击最多的 XP</span></h3>
+    <div class="tagCloud pv" id="tagCloud"></div>
+  </div>
+  <div class="card">
+    <h3>作品出场榜 <span>回头率最高</span></h3>
+    <div class="pv" id="workBars"></div>
+  </div>
+  <div class="card">
+    <h3>最近记录</h3>
+    <div id="histList"></div>
+    <button class="more" id="moreBtn" style="display:none">展开更多</button>
+  </div>
+</div>
+
+<!-- 年报 -->
+<div class="panel" id="p-year">
+  <div class="card">
+    <h3>年度报告 <em id="yearNow"></em> <span>你的一整年</span></h3>
+    <div class="bigline">
+      <div class="n num" id="yTotal">0<em>次</em></div>
+      <div class="sub num">周均 <b id="yWeekAvg">0</b> 次 · 记录 <b id="yDays">0</b> 天</div>
+    </div>
+    <svg id="yearChart" viewBox="0 0 340 150"></svg>
+  </div>
+  <div class="card">
+    <h3>年度之最</h3>
+    <div class="statgrid">
+      <div class="sg"><div class="v num vio" id="yPeakM">—</div><div class="k">巅峰月份</div></div>
+      <div class="sg"><div class="v num vio" id="yPeakD">—</div><div class="k">最凶的一天</div></div>
+      <div class="sg"><div class="v num gold" id="yLongSage">—</div><div class="k">最长贤者时间</div></div>
+      <div class="sg"><div class="v num" id="yFavCat">—</div><div class="k">年度本命类型</div></div>
+      <div class="sg wide"><div class="v gold pv" id="yFavWork" style="font-size:15px">—</div><div class="k">年度本命作品</div></div>
+      <div class="sg wide"><div class="v vio pv" id="yFavTag" style="font-size:15px">—</div><div class="k">年度本命标签</div></div>
+    </div>
+    <div class="iorow" style="margin-top:12px">
+      <button class="iobtn wide" id="yearShareBtn">🌙 生成年度报告图</button>
+    </div>
+    <div class="tip">报告图不带作品名和标签，只有数字和类型，可以放心保存（细节只留在你自己手机里）</div>
+  </div>
+</div>
+
+<!-- 成就 -->
+<div class="panel" id="p-badge">
+  <div class="card">
+    <h3>成就墙 <span id="badgeCnt" class="num"></span></h3>
+    <div class="badges" id="badgeBox"></div>
+  </div>
+  <div class="card">
+    <h3>周几分布 <span>全部记录</span></h3>
+    <svg id="weekdayChart" viewBox="0 0 340 120"></svg>
+  </div>
+</div>
+
+<!-- 数据 -->
+<div class="panel" id="p-data">
+  <div class="card">
+    <h3>备份 / 导入</h3>
+    <div class="iorow">
+      <button class="iobtn" id="expFile">导出文件</button>
+      <button class="iobtn" id="expClip">复制到剪贴板</button>
+      <button class="iobtn" id="impFile">导入文件</button>
+      <button class="iobtn" id="impClip">从剪贴板导入</button>
+    </div>
+    <input type="file" id="fileInput" accept=".json,application/json" style="display:none">
+    <div class="tip">· 导入自动合并去重，不覆盖已有记录<br>· 数据只存本机浏览器，换设备 / 清缓存前先导出<br>· 左上角 👁 开隐私模糊：作品名和标签打码，按住才显示</div>
+  </div>
+  <div class="card">
+    <h3>其他</h3>
+    <div class="iorow">
+      <button class="iobtn" id="backLog">补记（忘了记的）</button>
+      <button class="iobtn danger" id="wipeBtn">清空全部数据</button>
+    </div>
+  </div>
+</div>
+
+</main>
+
+<!-- 记录 sheet -->
+<div class="mask" id="mask"></div>
+<div class="sheet" id="logSheet">
+  <h2 id="logTitle">记一次</h2>
+  <div class="catRow" id="catRow"></div>
+  <div class="fgroup" id="fgSrc" style="display:none">
+    <div class="fl">来源</div>
+    <div class="catRow" id="srcRow" style="margin-bottom:0"></div>
+  </div>
+  <div class="fgroup" id="fgName" style="display:none">
+    <div class="fl" id="flName">名字（可不填）</div>
+    <input type="text" id="nameInput" placeholder="作品名" maxlength="40">
+    <div class="sugRow" id="nameSug"></div>
+  </div>
+  <div class="fgroup" id="fgTags" style="display:none">
+    <div class="fl">标签（逗号分隔，可不填）</div>
+    <input type="text" id="tagInput" placeholder="比如：御姐, 制服" maxlength="60">
+    <div class="sugRow" id="tagSug"></div>
+  </div>
+  <div class="timeRow" id="timeRow">
+    <div class="fl" style="font-size:12px;color:var(--dim);margin-bottom:7px">补记时间</div>
+    <input type="datetime-local" id="backTime">
+  </div>
+  <div class="srow">
+    <button class="sbtn sec" data-close>算了</button>
+    <button class="sbtn pri" id="logOk">记上</button>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+/* ================= 数据 ================= */
+const LS_KEY='sage_tracker_v1';
+const CATS=['片','本子','韩漫','其他'];
+const SRCS=['推特','电报','网站','其他'];
+const state=load();
+let histShown=12;
+
+function load(){
+  try{
+    const raw=localStorage.getItem(LS_KEY);
+    if(raw){const d=JSON.parse(raw);
+      if(Array.isArray(d.logs))return normalize(d);}
+  }catch(e){}
+  return normalize({logs:[],privacy:false,lastCat:'片'});
+}
+function normalize(d){
+  d.logs=(d.logs||[]).filter(l=>l&&typeof l.t==='number').map(l=>({
+    t:l.t,
+    c:CATS.includes(l.c)?l.c:'其他',
+    n:typeof l.n==='string'?l.n.slice(0,40):'',
+    s:typeof l.s==='string'?l.s.slice(0,10):'',
+    g:Array.isArray(l.g)?l.g.filter(x=>typeof x==='string').map(x=>x.slice(0,20)).slice(0,10):[],
+  })).sort((a,b)=>a.t-b.t);
+  if(typeof d.privacy!=='boolean')d.privacy=false;
+  if(!CATS.includes(d.lastCat))d.lastCat='片';
+  return d;
+}
+function save(){
+  try{localStorage.setItem(LS_KEY,JSON.stringify(state));}
+  catch(e){toast('存储失败：浏览器可能禁用了本地存储');}
+}
+
+/* ================= 工具 ================= */
+const $=s=>document.querySelector(s);
+const pad=n=>String(n).padStart(2,'0');
+function dayKey(t){const d=new Date(t);return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());}
+function startOfDay(t){const d=new Date(t);d.setHours(0,0,0,0);return d.getTime();}
+function fmtGap(ms){
+  if(ms==null)return'—';
+  const m=Math.floor(ms/60000);
+  if(m<1)return'刚刚';
+  if(m<60)return m+'<small>分</small>';
+  const h=Math.floor(m/60);
+  if(h<24)return h+'<small>时</small>';
+  const dd=Math.floor(h/24);
+  return dd+'<small>天</small>'+(h%24?(h%24)+'<small>时</small>':'');
+}
+function toast(msg){
+  const t=$('#toast');t.textContent=msg;t.classList.add('on');
+  clearTimeout(t._tm);t._tm=setTimeout(()=>t.classList.remove('on'),1900);
+}
+function popEl(el){el.classList.remove('pop');void el.offsetWidth;el.classList.add('pop');}
+function esc(s){return String(s).replace(/[<>&"]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c]));}
+
+/* ================= 星空 ================= */
+(function(){
+  const sky=$('#sky');
+  for(let i=0;i<26;i++){
+    const s=document.createElement('i');
+    if(Math.random()<.2)s.className='big';
+    s.style.left=Math.random()*100+'%';
+    s.style.top=Math.random()*90+'%';
+    s.style.setProperty('--d',(2.5+Math.random()*4)+'s');
+    s.style.setProperty('--dl',(Math.random()*4)+'s');
+    sky.appendChild(s);
+  }
+})();
+
+/* ================= 隐私 ================= */
+function applyPrivacy(){
+  document.body.classList.toggle('privacy',state.privacy);
+  $('#eyeBtn').classList.toggle('on',state.privacy);
+  $('#eyeBtn').textContent=state.privacy?'🙈':'👁';
+}
+$('#eyeBtn').onclick=()=>{state.privacy=!state.privacy;save();applyPrivacy();toast(state.privacy?'隐私模糊已开，按住内容可临时查看':'隐私模糊已关');};
+
+/* ================= 记录 sheet ================= */
+let sheetCat=state.lastCat,sheetSrc='推特',isBackfill=false;
+
+function renderCatRow(){
+  const row=$('#catRow');row.innerHTML='';
+  CATS.forEach(c=>{
+    const e=document.createElement('div');
+    e.className='cat'+(c===sheetCat?' on':'');
+    e.textContent=c;
+    e.onclick=()=>{sheetCat=c;renderCatRow();renderFields();};
+    row.appendChild(e);
+  });
+}
+function renderSrcRow(){
+  const row=$('#srcRow');row.innerHTML='';
+  SRCS.forEach(s=>{
+    const e=document.createElement('div');
+    e.className='cat'+(s===sheetSrc?' on':'');
+    e.style.padding='7px 13px';e.style.fontSize='13px';
+    e.textContent=s;
+    e.onclick=()=>{sheetSrc=s;renderSrcRow();};
+    row.appendChild(e);
+  });
+}
+function recentNames(cat,limit){
+  const seen=new Set(),out=[];
+  for(let i=state.logs.length-1;i>=0&&out.length<limit;i--){
+    const l=state.logs[i];
+    if(l.c===cat&&l.n&&!seen.has(l.n)){seen.add(l.n);out.push(l.n);}
+  }
+  return out;
+}
+function allTags(limit){
+  const map={};
+  state.logs.forEach(l=>l.g.forEach(g=>map[g]=(map[g]||0)+1));
+  return Object.entries(map).sort((a,b)=>b[1]-a[1]).slice(0,limit).map(e=>e[0]);
+}
+function renderFields(){
+  $('#fgSrc').style.display=sheetCat==='片'?'block':'none';
+  const needName=sheetCat==='本子'||sheetCat==='韩漫';
+  $('#fgName').style.display=needName?'block':'none';
+  $('#fgTags').style.display=sheetCat==='本子'?'block':'none';
+  if(sheetCat==='片')renderSrcRow();
+  if(needName){
+    $('#flName').textContent=(sheetCat==='本子'?'本子名':'韩漫名')+'（可不填）';
+    const sug=$('#nameSug');sug.innerHTML='';
+    recentNames(sheetCat,6).forEach(n=>{
+      const e=document.createElement('div');e.className='sug pv';e.textContent=n;
+      e.onclick=()=>{$('#nameInput').value=n;};
+      sug.appendChild(e);
+    });
+  }
+  if(sheetCat==='本子'){
+    const sug=$('#tagSug');sug.innerHTML='';
+    allTags(8).forEach(g=>{
+      const e=document.createElement('div');e.className='sug pv';e.textContent=g;
+      e.onclick=()=>{
+        const cur=$('#tagInput').value.trim();
+        const has=cur.split(/[,，]/).map(x=>x.trim()).filter(Boolean);
+        if(!has.includes(g)){has.push(g);$('#tagInput').value=has.join(', ');}
+      };
+      sug.appendChild(e);
+    });
+  }
+}
+function openLog(backfill){
+  isBackfill=!!backfill;
+  sheetCat=state.lastCat;
+  $('#logTitle').textContent=backfill?'补记一次':'记一次';
+  $('#nameInput').value='';$('#tagInput').value='';
+  $('#timeRow').classList.toggle('on',isBackfill);
+  if(isBackfill){
+    const d=new Date();d.setMinutes(d.getMinutes()-d.getTimezoneOffset());
+    $('#backTime').value=d.toISOString().slice(0,16);
+  }
+  renderCatRow();renderFields();
+  $('#mask').classList.add('on');$('#logSheet').classList.add('on');
+}
+function closeSheets(){
+  $('#mask').classList.remove('on');
+  document.querySelectorAll('.sheet').forEach(s=>s.classList.remove('on'));
+}
+$('#mask').onclick=closeSheets;
+document.querySelectorAll('[data-close]').forEach(b=>b.onclick=closeSheets);
+$('#backLog').onclick=()=>openLog(true);
+
+$('#moonBtn').onclick=()=>{
+  /* 动效 */
+  const r=$('#ripple');r.classList.remove('go');void r.offsetWidth;r.classList.add('go');
+  for(let i=0;i<6;i++){
+    const s=document.createElement('div');s.className='spark';
+    const a=Math.random()*Math.PI*2,d=70+Math.random()*40;
+    s.style.setProperty('--sx',Math.cos(a)*d+'px');
+    s.style.setProperty('--sy',Math.sin(a)*d+'px');
+    $('.moonWrap').appendChild(s);
+    requestAnimationFrame(()=>s.classList.add('go'));
+    setTimeout(()=>s.remove(),900);
+  }
+  if(navigator.vibrate)navigator.vibrate(16);
+  openLog(false);
+};
+
+let lastLogged=null;
+$('#logOk').onclick=()=>{
+  let t=Date.now();
+  if(isBackfill){
+    const v=$('#backTime').value;
+    if(!v)return toast('先选时间');
+    t=new Date(v).getTime();
+    if(isNaN(t))return toast('时间不对哦');
+    if(t>Date.now())return toast('未来的事还没发生呢');
+  }
+  const rec={
+    t,c:sheetCat,
+    n:$('#nameInput').value.trim().slice(0,40),
+    s:sheetCat==='片'?sheetSrc:'',
+    g:sheetCat==='本子'?$('#tagInput').value.split(/[,，]/).map(x=>x.trim()).filter(Boolean).slice(0,10):[],
+  };
+  state.logs.push(rec);
+  state.logs.sort((a,b)=>a.t-b.t);
+  state.lastCat=sheetCat;
+  save();renderAll();closeSheets();
+  lastLogged=rec;
+  const n=state.logs.filter(l=>startOfDay(l.t)===startOfDay(Date.now())).length;
+  $('#undoTxt').textContent='已记 · '+rec.c+(isBackfill?' · 补记':' · 今日第 '+n+' 次');
+  $('#undoBar').style.display='flex';
+  clearTimeout($('#logOk')._tm);
+  $('#logOk')._tm=setTimeout(()=>{$('#undoBar').style.display='none';lastLogged=null;},8000);
+  popEl($('#bigN'));
+};
+$('#undoBtn').onclick=()=>{
+  if(!lastLogged)return;
+  const i=state.logs.indexOf(lastLogged);
+  if(i>-1){state.logs.splice(i,1);save();renderAll();toast('已撤销');}
+  $('#undoBar').style.display='none';lastLogged=null;
+};
+$('#wipeBtn').onclick=()=>{
+  if(!confirm('真的要清空全部 '+state.logs.length+' 条记录吗？'))return;
+  if(!confirm('最后确认：清了就没了，建议先导出。确定？'))return;
+  state.logs=[];save();renderAll();toast('已清空');
+};
+
+/* ================= 导入导出 ================= */
+function exportData(){return JSON.stringify({app:'sage-tracker',ver:1,exportedAt:new Date().toISOString(),...state});}
+$('#expFile').onclick=()=>{
+  const blob=new Blob([exportData()],{type:'application/json'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='贤者记录-'+dayKey(Date.now())+'.json';
+  a.click();URL.revokeObjectURL(a.href);
+  toast('已导出');
+};
+$('#expClip').onclick=async()=>{
+  try{await navigator.clipboard.writeText(exportData());toast('已复制到剪贴板');}
+  catch(e){toast('复制失败，试试导出文件');}
+};
+$('#impFile').onclick=()=>$('#fileInput').click();
+$('#fileInput').onchange=e=>{
+  const f=e.target.files[0];if(!f)return;
+  const r=new FileReader();
+  r.onload=()=>importJSON(r.result);
+  r.readAsText(f);e.target.value='';
+};
+$('#impClip').onclick=async()=>{
+  try{const txt=await navigator.clipboard.readText();importJSON(txt);}
+  catch(e){toast('读取剪贴板失败');}
+};
+function importJSON(txt){
+  let d;
+  try{d=JSON.parse(txt);}catch(e){return toast('不是有效的 JSON');}
+  let logs=[];
+  if(Array.isArray(d.logs))logs=d.logs;
+  else if(Array.isArray(d))logs=d;
+  logs=logs.map(l=>{
+    if(typeof l==='number')return{t:l,c:'其他',n:'',s:'',g:[]};
+    if(l&&typeof l.t==='number')return{t:l.t,c:CATS.includes(l.c)?l.c:'其他',n:String(l.n||'').slice(0,40),s:String(l.s||'').slice(0,10),g:Array.isArray(l.g)?l.g.map(String).slice(0,10):[]};
+    return null;
+  }).filter(Boolean);
+  if(!logs.length)return toast('没找到可导入的记录');
+  const seen=new Set(state.logs.map(l=>l.t+'|'+l.c));
+  let added=0;
+  logs.forEach(l=>{
+    const k=l.t+'|'+l.c;
+    if(!seen.has(k)){seen.add(k);state.logs.push(l);added++;}
+  });
+  state.logs.sort((a,b)=>a.t-b.t);
+  save();renderAll();
+  toast('导入完成，新增 '+added+' 条'+(logs.length-added?('，跳过重复 '+(logs.length-added)+' 条'):''));
+}
+
+/* ================= 统计 ================= */
+function countByDay(from,days){
+  const arr=new Array(days).fill(0);
+  const f=startOfDay(from);
+  state.logs.forEach(l=>{
+    const i=Math.floor((startOfDay(l.t)-f)/86400000);
+    if(i>=0&&i<days)arr[i]++;
+  });
+  return arr;
+}
+function mondayOf(t){
+  const d=new Date(startOfDay(t));
+  const w=(d.getDay()+6)%7;
+  d.setDate(d.getDate()-w);
+  return d.getTime();
+}
+function topOf(map){
+  const arr=Object.entries(map).sort((a,b)=>b[1]-a[1]);
+  return arr.length?arr[0]:null;
+}
+
+function renderAll(){
+  const now=Date.now(),today0=startOfDay(now);
+  const d=new Date();
+  const todayLogs=state.logs.filter(l=>l.t>=today0);
+  const mon=mondayOf(now);
+  const weekLogs=state.logs.filter(l=>l.t>=mon);
+  const m0=new Date(d.getFullYear(),d.getMonth(),1).getTime();
+  const monthLogs=state.logs.filter(l=>l.t>=m0);
+
+  /* header */
+  $('#headDate').innerHTML=d.getFullYear()+'.'+pad(d.getMonth()+1)+'.'+pad(d.getDate())+' 周'+'日一二三四五六'[d.getDay()]+'<br>本月 <b>'+monthLogs.length+'</b> 次';
+
+  /* hero */
+  $('#bigN').textContent=todayLogs.length;
+  const last=state.logs[state.logs.length-1];
+  if(last){
+    $('#sageBar').style.display='inline-flex';
+    $('#sageT').innerHTML=fmtGap(now-last.t);
+  }else $('#sageBar').style.display='none';
+  $('#hint').innerHTML=state.logs.length?'点月亮 · 打开记录':'点月亮，记下第一笔';
+
+  /* today strip */
+  $('#tWeek').textContent=weekLogs.length;
+  $('#tMonth').textContent=monthLogs.length;
+  if(state.logs.length>=2){
+    const span=state.logs[state.logs.length-1].t-state.logs[0].t;
+    $('#tAvgGap').innerHTML=fmtGap(span/(state.logs.length-1));
+  }else $('#tAvgGap').innerHTML='—';
+
+  /* ---- 周 ---- */
+  const week=countByDay(mon,7);
+  const prevWeek=countByDay(mon-7*86400000,7);
+  const wTotal=week.reduce((a,b)=>a+b,0);
+  const pTotal=prevWeek.reduce((a,b)=>a+b,0);
+  const daysPassed=Math.min(7,Math.floor((now-mon)/86400000)+1);
+  $('#weekTotal').innerHTML=wTotal+'<em>次</em>';
+  $('#weekAvg').textContent=(wTotal/daysPassed).toFixed(1);
+  $('#weekPrev').textContent=pTotal;
+  diffText($('#weekDiff'),wTotal,pTotal);
+  const mn=new Date(mon),mn2=new Date(mon+6*86400000);
+  $('#weekRange').textContent=pad(mn.getMonth()+1)+'.'+pad(mn.getDate())+' – '+pad(mn2.getMonth()+1)+'.'+pad(mn2.getDate());
+  drawBars('#weekChart',week,['一','二','三','四','五','六','日'],150,(d.getDay()+6)%7);
+
+  /* ---- 月 ---- */
+  const mDays=new Date(d.getFullYear(),d.getMonth()+1,0).getDate();
+  const month=countByDay(m0,mDays);
+  const mTotal=month.reduce((a,b)=>a+b,0);
+  const pm0=new Date(d.getFullYear(),d.getMonth()-1,1).getTime();
+  const pmDays=new Date(d.getFullYear(),d.getMonth(),0).getDate();
+  const pmTotal=countByDay(pm0,pmDays).reduce((a,b)=>a+b,0);
+  $('#monthName').textContent=d.getFullYear()+'年'+(d.getMonth()+1)+'月';
+  $('#monthTotal').innerHTML=mTotal+'<em>次</em>';
+  $('#monthAvg').textContent=(mTotal/d.getDate()).toFixed(1);
+  $('#monthPrev').textContent=pmTotal;
+  diffText($('#monthDiff'),mTotal,pmTotal);
+  renderHeat(month,m0,mDays,d.getDate()-1);
+
+  /* 时段 */
+  const hours=new Array(24).fill(0);
+  state.logs.forEach(l=>hours[new Date(l.t).getHours()]++);
+  drawHours('#hourChart',hours);
+
+  /* ---- 品味 ---- */
+  renderCatBars();
+  renderSrcBars();
+  renderTagCloud();
+  renderWorkBars();
+  renderHist();
+
+  /* ---- 年报 ---- */
+  renderYear(d);
+
+  /* ---- 成就 ---- */
+  renderBadges(now);
+  const wd=new Array(7).fill(0);
+  state.logs.forEach(l=>wd[(new Date(l.t).getDay()+6)%7]++);
+  drawBars('#weekdayChart',wd,['一','二','三','四','五','六','日'],120,wd.indexOf(Math.max(...wd)));
+}
+
+function renderCatBars(){
+  const box=$('#catBars');box.innerHTML='';
+  if(!state.logs.length){box.innerHTML='<div class="empty">还没有记录</div>';return;}
+  const map={};state.logs.forEach(l=>map[l.c]=(map[l.c]||0)+1);
+  const arr=Object.entries(map).sort((a,b)=>b[1]-a[1]);
+  const max=arr[0][1],total=state.logs.length;
+  arr.forEach(([c,n])=>{
+    const row=document.createElement('div');row.className='brow';
+    row.innerHTML='<div class="name">'+esc(c)+'<small>'+Math.round(n/total*100)+'%</small></div><div class="bar"><i style="width:'+(n/max*100)+'%"></i></div><div class="cnt num">'+n+' 次</div>';
+    box.appendChild(row);
+  });
+}
+function renderSrcBars(){
+  const box=$('#srcBars');box.innerHTML='';
+  const vids=state.logs.filter(l=>l.c==='片'&&l.s);
+  if(!vids.length){box.innerHTML='<div class="empty">还没有「片」的记录（记的时候选一下来源就有了）</div>';return;}
+  const map={};vids.forEach(l=>map[l.s]=(map[l.s]||0)+1);
+  const arr=Object.entries(map).sort((a,b)=>b[1]-a[1]);
+  const max=arr[0][1],total=vids.length;
+  arr.forEach(([s,n])=>{
+    const row=document.createElement('div');row.className='brow';
+    row.innerHTML='<div class="name">'+esc(s)+'<small>'+Math.round(n/total*100)+'%</small></div><div class="bar"><i class="gold" style="width:'+(n/max*100)+'%"></i></div><div class="cnt num">'+n+' 次</div>';
+    box.appendChild(row);
+  });
+}
+function renderTagCloud(){
+  const box=$('#tagCloud');box.innerHTML='';
+  const map={};
+  state.logs.forEach(l=>l.g.forEach(g=>map[g]=(map[g]||0)+1));
+  const arr=Object.entries(map).sort((a,b)=>b[1]-a[1]).slice(0,20);
+  if(!arr.length){box.innerHTML='<div class="empty">还没记过本子标签，记「本子」的时候顺手填两个，这里会长出你的 XP 图谱</div>';return;}
+  arr.forEach(([g,n],i)=>{
+    const e=document.createElement('div');
+    e.className='tg'+(i<3?' hot':'');
+    e.innerHTML=esc(g)+'<b class="num">'+n+'</b>';
+    box.appendChild(e);
+  });
+}
+function renderWorkBars(){
+  const box=$('#workBars');box.innerHTML='';
+  const map={};
+  state.logs.forEach(l=>{if(l.n)map[l.c+'｜'+l.n]=(map[l.c+'｜'+l.n]||0)+1;});
+  const arr=Object.entries(map).sort((a,b)=>b[1]-a[1]).slice(0,8);
+  if(!arr.length){box.innerHTML='<div class="empty">还没记过作品名。回头率 ≥2 的都会上榜，看看谁才是你的白月光</div>';return;}
+  const max=arr[0][1];
+  arr.forEach(([k,n])=>{
+    const[c,name]=k.split('｜');
+    const row=document.createElement('div');row.className='brow';
+    row.innerHTML='<div class="name" style="min-width:0;max-width:46%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(name)+'<small>'+esc(c)+'</small></div><div class="bar"><i style="width:'+(n/max*100)+'%"></i></div><div class="cnt num">'+n+' 次</div>';
+    box.appendChild(row);
+  });
+}
+function renderHist(){
+  const box=$('#histList');box.innerHTML='';
+  const logs=[...state.logs].reverse().slice(0,histShown);
+  if(!logs.length)box.innerHTML='<div class="empty">点月亮开始记录吧</div>';
+  logs.forEach(l=>{
+    const row=document.createElement('div');row.className='hrow';
+    const dt=new Date(l.t);
+    const isToday=startOfDay(l.t)===startOfDay(Date.now());
+    const ts=(isToday?'今天':pad(dt.getMonth()+1)+'.'+pad(dt.getDate()))+' '+pad(dt.getHours())+':'+pad(dt.getMinutes());
+    let detail='';
+    if(l.n)detail='<b class="pv">'+esc(l.n)+'</b>';
+    if(l.s)detail+=(detail?' · ':'')+esc(l.s);
+    if(l.g.length)detail+=(detail?' · ':'')+'<span class="pv">'+esc(l.g.join(' / '))+'</span>';
+    row.innerHTML='<span class="t num">'+ts+'</span><span class="cbadge c'+esc(l.c)+'">'+esc(l.c)+'</span><span class="b">'+(detail||'—')+'</span>';
+    const del=document.createElement('button');del.className='del';del.textContent='×';
+    del.onclick=()=>{
+      const i=state.logs.indexOf(l);
+      if(i>-1){state.logs.splice(i,1);save();renderAll();toast('已删除');}
+    };
+    row.appendChild(del);box.appendChild(row);
+  });
+  $('#moreBtn').style.display=state.logs.length>histShown?'block':'none';
+}
+$('#moreBtn').onclick=()=>{histShown+=20;renderHist();};
+
+/* ---- 年报 ---- */
+let yearCache={};
+function renderYear(d){
+  const y=d.getFullYear();
+  $('#yearNow').textContent=y;
+  const y0=new Date(y,0,1).getTime();
+  const yLogs=state.logs.filter(l=>l.t>=y0);
+  const months=new Array(12).fill(0);
+  yLogs.forEach(l=>months[new Date(l.t).getMonth()]++);
+  const total=yLogs.length;
+  $('#yTotal').innerHTML=total+'<em>次</em>';
+  const weeksPassed=Math.max(1,(Date.now()-y0)/(7*86400000));
+  $('#yWeekAvg').textContent=(total/weeksPassed).toFixed(1);
+  const daySet=new Set(yLogs.map(l=>startOfDay(l.t)));
+  $('#yDays').textContent=daySet.size;
+  drawBars('#yearChart',months,months.map((_,i)=>(i+1)+'月'),150,months.indexOf(Math.max(...months)));
+
+  let peakM='—',peakD='—',longSage='—',favCat='—',favWork='—',favTag='—';
+  if(total){
+    const pm=months.indexOf(Math.max(...months));
+    peakM=(pm+1)+'月 · '+months[pm]+'次';
+    const byDay={};
+    yLogs.forEach(l=>{const k=dayKey(l.t);byDay[k]=(byDay[k]||0)+1;});
+    const pk=topOf(byDay);
+    peakD=pk[0].slice(5).replace('-','.')+' · '+pk[1]+'次';
+    let mg=0;
+    for(let i=1;i<yLogs.length;i++)mg=Math.max(mg,yLogs[i].t-yLogs[i-1].t);
+    mg=Math.max(mg,Date.now()-yLogs[yLogs.length-1].t);
+    longSage=fmtGapPlainDays(mg);
+    const cm={};yLogs.forEach(l=>cm[l.c]=(cm[l.c]||0)+1);
+    const fc=topOf(cm);favCat=fc[0]+' · '+Math.round(fc[1]/total*100)+'%';
+    const wm={};yLogs.forEach(l=>{if(l.n)wm[l.n]=(wm[l.n]||0)+1;});
+    const fw=topOf(wm);if(fw&&fw[1]>=2)favWork=fw[0]+' · '+fw[1]+'次';
+    const tm={};yLogs.forEach(l=>l.g.forEach(g=>tm[g]=(tm[g]||0)+1));
+    const ft=topOf(tm);if(ft)favTag=ft[0]+' · '+ft[1]+'次';
+  }
+  $('#yPeakM').textContent=peakM;
+  $('#yPeakD').textContent=peakD;
+  $('#yLongSage').textContent=longSage;
+  $('#yFavCat').textContent=favCat;
+  $('#yFavWork').textContent=favWork;
+  $('#yFavTag').textContent=favTag;
+  yearCache={y,total,months,peakM,peakD,longSage,favCat,weekAvg:(total/weeksPassed).toFixed(1),days:daySet.size};
+}
+function fmtGapPlainDays(ms){
+  const h=Math.floor(ms/3600000);
+  if(h<24)return h+'小时';
+  return Math.floor(h/24)+'天'+(h%24?h%24+'时':'');
+}
+
+/* 成就 */
+function renderBadges(now){
+  const logs=state.logs;
+  const total=logs.length;
+  const spanDays=total?Math.floor((startOfDay(now)-startOfDay(logs[0].t))/86400000)+1:0;
+  let maxGap=0;
+  for(let i=1;i<logs.length;i++)maxGap=Math.max(maxGap,logs[i].t-logs[i-1].t);
+  if(total)maxGap=Math.max(maxGap,now-logs[logs.length-1].t);
+  const cats=new Set(logs.map(l=>l.c));
+  const tags=new Set();logs.forEach(l=>l.g.forEach(g=>tags.add(g)));
+  const works=new Set();logs.forEach(l=>{if(l.n)works.add(l.n);});
+  const night=logs.filter(l=>{const h=new Date(l.t).getHours();return h>=0&&h<4;}).length;
+  const badges=[
+    {e:'🌱',n:'初次记录',d:'万事开头难',ok:total>=1},
+    {e:'📿',n:'贤者七日',d:'两次之间隔了 7 天以上',ok:maxGap>=7*86400000},
+    {e:'🧘',n:'半月圣人',d:'两次之间隔了 14 天以上',ok:maxGap>=14*86400000},
+    {e:'🌊',n:'雨露均沾',d:'片、本子、韩漫都有记录',ok:cats.has('片')&&cats.has('本子')&&cats.has('韩漫')},
+    {e:'🏷️',n:'鉴赏家',d:'累计标签达到 10 种',ok:tags.size>=10},
+    {e:'📚',n:'藏书家',d:'记录过 20 部不同作品',ok:works.size>=20},
+    {e:'💘',n:'白月光',d:'同一部作品回头 5 次',ok:hasRepeat(5)},
+    {e:'🦉',n:'夜行动物',d:'凌晨 0–4 点记录满 10 次',ok:night>=10},
+    {e:'📅',n:'满月档案',d:'记录跨度满 30 天',ok:spanDays>=30},
+    {e:'💯',n:'百次纪念',d:'累计 100 次',ok:total>=100},
+    {e:'🗓️',n:'补票选手',d:'用过补记功能',ok:usedBackfill()},
+    {e:'🌌',n:'年度报告',d:'一年记录满 100 次，解锁完整年报',ok:yearCache.total>=100},
+  ];
+  const box=$('#badgeBox');box.innerHTML='';
+  badges.forEach(b=>{
+    const e=document.createElement('div');
+    e.className='badge'+(b.ok?' got':'');
+    e.innerHTML='<div class="emo">'+b.e+'</div><div class="tx"><div class="nm">'+b.n+'</div><div class="ds">'+b.d+'</div></div>';
+    box.appendChild(e);
+  });
+  $('#badgeCnt').textContent=badges.filter(b=>b.ok).length+' / '+badges.length;
+}
+function hasRepeat(n){
+  const m={};
+  for(const l of state.logs){if(l.n){m[l.n]=(m[l.n]||0)+1;if(m[l.n]>=n)return true;}}
+  return false;
+}
+function usedBackfill(){
+  /* 简化判定：存在记录时间与相邻记录乱序插入过 —— 用标记更稳，这里用 g/s 无关的标志位 */
+  return !!state.backfilled;
+}
+
+/* ================= 图表 ================= */
+function diffText(el,cur,prev){
+  if(prev===0){el.textContent=cur>0?'新增':'—';el.className='';return;}
+  const diff=cur-prev;
+  const pct=Math.round(Math.abs(diff)/prev*100);
+  if(diff>0){el.textContent='↑'+pct+'%';el.className='trend-up';}
+  else if(diff<0){el.textContent='↓'+pct+'%';el.className='trend-down';}
+  else{el.textContent='持平';el.className='';}
+}
+function drawBars(sel,vals,labels,H,hotIdx){
+  const svg=$(sel);const W=340,padB=18,padT=14;
+  const max=Math.max(...vals,1);
+  const n=vals.length;
+  const gap=n>12?2:8;
+  const bw=(W-4-gap*(n-1))/n;
+  let s='';
+  vals.forEach((v,i)=>{
+    const h=v/max*(H-padB-padT);
+    const x=2+i*(bw+gap),y=H-padB-h;
+    const hot=i===hotIdx&&v>0;
+    s+='<rect x="'+x+'" y="'+y+'" width="'+bw+'" height="'+Math.max(h,v>0?3:0)+'" rx="'+Math.min(5,bw/2)+'" fill="'+(hot?'url(#gV)':'rgba(139,148,232,.38)')+'"/>';
+    if(v>0)s+='<text class="barlab" x="'+(x+bw/2)+'" y="'+(y-4)+'" text-anchor="middle">'+v+'</text>';
+    if(labels[i])s+='<text class="axis" x="'+(x+bw/2)+'" y="'+(H-5)+'" text-anchor="middle">'+labels[i]+'</text>';
+  });
+  svg.innerHTML='<defs><linearGradient id="gV" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#C3CAFF"/><stop offset=".5" stop-color="#8B94E8"/><stop offset="1" stop-color="#5A64C4"/></linearGradient></defs>'+s;
+}
+function drawHours(sel,hours){
+  const svg=$(sel);const W=340,H=110,padB=16,padT=10;
+  const max=Math.max(...hours,1);
+  const bw=(W-4-23*2)/24;
+  let s='<defs><linearGradient id="gV2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#E8C77B"/><stop offset="1" stop-color="#8B94E8"/></linearGradient></defs>';
+  hours.forEach((v,i)=>{
+    const h=v/max*(H-padB-padT);
+    const x=2+i*(bw+2),y=H-padB-h;
+    s+='<rect x="'+x+'" y="'+y+'" width="'+bw+'" height="'+Math.max(h,v>0?3:1)+'" rx="2" fill="'+(v===max&&v>0?'url(#gV2)':(v>0?'rgba(139,148,232,.42)':'rgba(237,239,249,.06)'))+'"/>';
+    if(i%6===0)s+='<text class="axis" x="'+(x+bw/2)+'" y="'+(H-3)+'" text-anchor="middle">'+i+'点</text>';
+  });
+  svg.innerHTML=s;
+}
+function renderHeat(month,m0,mDays,todayIdx){
+  const box=$('#heatmap');box.innerHTML='';
+  '一二三四五六日'.split('').forEach(w=>{
+    const e=document.createElement('div');e.className='wd';e.textContent=w;box.appendChild(e);
+  });
+  const firstW=(new Date(m0).getDay()+6)%7;
+  for(let i=0;i<firstW;i++)box.appendChild(document.createElement('div'));
+  const max=Math.max(...month,1);
+  month.forEach((v,i)=>{
+    const e=document.createElement('div');
+    let lvl='';
+    if(v>0){
+      const r=v/max;
+      lvl=r>.85?' l4':r>.6?' l3':r>.3?' l2':' l1';
+    }
+    e.className='hcell'+lvl+(i===todayIdx?' today':'')+(i>todayIdx?' future':'');
+    e.textContent=v>0?v:(i+1);
+    if(v===0)e.style.fontSize='9px';
+    box.appendChild(e);
+  });
+}
+
+/* ================= 年报图（不含名字标签，放心保存） ================= */
+$('#yearShareBtn').onclick=()=>{
+  const yc=yearCache;
+  const cv=document.createElement('canvas');
+  cv.width=720;cv.height=1080;
+  const c=cv.getContext('2d');
+
+  c.fillStyle='#0C0E1C';c.fillRect(0,0,720,1080);
+  let g=c.createRadialGradient(360,-120,60,360,-120,640);
+  g.addColorStop(0,'rgba(139,148,232,.26)');g.addColorStop(1,'rgba(139,148,232,0)');
+  c.fillStyle=g;c.fillRect(0,0,720,540);
+  /* 星星 */
+  for(let i=0;i<40;i++){
+    c.fillStyle=Math.random()<.2?'rgba(232,199,123,.7)':'rgba(203,211,240,.45)';
+    c.beginPath();c.arc(Math.random()*720,Math.random()*1000,Math.random()*1.8+.6,0,7);c.fill();
+  }
+  /* 月亮 */
+  g=c.createRadialGradient(600,140,8,600,140,64);
+  g.addColorStop(0,'#F6F8FF');g.addColorStop(.6,'#DCE2F5');g.addColorStop(1,'#8B94C8');
+  c.fillStyle=g;c.beginPath();c.arc(600,140,56,0,7);c.fill();
+  c.fillStyle='rgba(120,128,170,.3)';
+  c.beginPath();c.arc(586,126,10,0,7);c.fill();
+  c.beginPath();c.arc(614,152,7,0,7);c.fill();
+
+  c.fillStyle='#EDEFF9';
+  c.font='900 58px "Songti SC","Noto Serif SC",serif';
+  c.fillText('贤者时间',60,132);
+  c.fillStyle='#8E94B8';c.font='600 26px -apple-system,"PingFang SC",sans-serif';
+  c.fillText(yc.y+' 年度报告',60,178);
+
+  g=c.createLinearGradient(0,260,0,400);
+  g.addColorStop(0,'#F4F6FF');g.addColorStop(1,'#A8AFFF');
+  c.fillStyle=g;c.font='900 150px "Songti SC","Noto Serif SC",serif';
+  c.fillText(String(yc.total),60,406);
+  c.font='900 150px "Songti SC",serif';
+  const numW=c.measureText(String(yc.total)).width;
+  c.fillStyle='#8E94B8';c.font='600 30px -apple-system,sans-serif';
+  c.fillText('次',72+numW,406);
+
+  c.fillStyle='#8E94B8';c.font='500 25px -apple-system,sans-serif';
+  c.fillText('周均 '+yc.weekAvg+' 次 · 活跃 '+yc.days+' 天',60,462);
+
+  /* 12月柱状 */
+  const bx=60,by=800,bw2=40,bgap=11,bh=220;
+  const max=Math.max(...yc.months,1);
+  yc.months.forEach((v,i)=>{
+    const h=Math.max(v/max*bh,v>0?6:0);
+    const x=bx+i*(bw2+bgap),y=by-h;
+    if(v>0){
+      g=c.createLinearGradient(0,y,0,by);
+      g.addColorStop(0,'#C3CAFF');g.addColorStop(1,'#5A64C4');
+      c.fillStyle=g;
+    }else c.fillStyle='rgba(139,148,232,.12)';
+    roundRect(c,x,v>0?y:by-4,bw2,v>0?h:4,8);c.fill();
+    if(v>0){c.fillStyle='#8E94B8';c.font='700 20px -apple-system,sans-serif';c.textAlign='center';c.fillText(String(v),x+bw2/2,y-12);}
+    c.fillStyle='#4E5478';c.font='500 18px -apple-system,sans-serif';c.textAlign='center';
+    c.fillText((i+1)+'月',x+bw2/2,by+32);
+    c.textAlign='left';
+  });
+
+  /* 之最 */
+  c.font='500 25px -apple-system,sans-serif';
+  const lines=[
+    ['巅峰月份',yc.peakM],
+    ['最凶的一天',yc.peakD],
+    ['最长贤者时间',yc.longSage],
+    ['年度本命类型',yc.favCat],
+  ];
+  let ly=900;
+  lines.forEach(([k,v])=>{
+    c.fillStyle='#4E5478';c.fillText(k,60,ly);
+    c.fillStyle='#C3CAFF';c.textAlign='right';c.fillText(v,660,ly);c.textAlign='left';
+    ly+=44;
+  });
+
+  c.fillStyle='#4E5478';c.font='500 20px -apple-system,sans-serif';
+  c.fillText('贤者时间 · 私人年报',60,1044);
+
+  const a=document.createElement('a');
+  a.href=cv.toDataURL('image/png');
+  a.download='贤者年报-'+yc.y+'.png';
+  a.click();
+  toast('年报已生成，存不下来就长按保存');
+};
+function roundRect(c,x,y,w,h,r){
+  r=Math.min(r,w/2,h/2);
+  c.beginPath();
+  c.moveTo(x+r,y);
+  c.arcTo(x+w,y,x+w,y+h,r);
+  c.arcTo(x+w,y+h,x,y+h,r);
+  c.arcTo(x,y+h,x,y,r);
+  c.arcTo(x,y,x+w,y,r);
+  c.closePath();
+}
+
+/* 补记标志 */
+const origBackLog=$('#backLog').onclick;
+$('#backLog').onclick=()=>{state.backfilled=true;save();openLog(true);};
+
+/* ================= tabs ================= */
+document.querySelectorAll('.tab').forEach(t=>{
+  t.onclick=()=>{
+    document.querySelectorAll('.tab').forEach(x=>x.classList.remove('on'));
+    document.querySelectorAll('.panel').forEach(x=>x.classList.remove('on'));
+    t.classList.add('on');
+    $('#p-'+t.dataset.p).classList.add('on');
+  };
+});
+
+/* ================= init ================= */
+applyPrivacy();
+renderAll();
+setInterval(renderAll,60000);
+</script>
+</body>
+</html>
