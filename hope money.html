@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>hope 算钱器 🐑</title>
+<style>
+  :root{
+    --pink:#ffd1e3; --pink-deep:#ff9ec2; --pink-soft:#fff0f6;
+    --ink:#7a5a68; --ink-soft:#b78ea3; --cream:#fffafc;
+    --line:#ffc9dd; --heart:#ff7fae;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  body{
+    margin:0; padding:16px 12px 40px;
+    font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;
+    background:
+      repeating-linear-gradient(45deg,#fff5fa 0 14px,#ffeef6 14px 28px);
+    color:var(--ink);
+  }
+  .wrap{max-width:460px; margin:0 auto;}
+  .head{
+    text-align:center; padding:18px 14px 14px; margin-bottom:16px;
+    background:var(--cream); border:3px dashed var(--pink-deep);
+    border-radius:26px; box-shadow:0 4px 0 #ffe0ec;
+  }
+  .head .emo{font-size:30px}
+  .head h1{margin:6px 0 2px; font-size:22px; letter-spacing:2px; color:var(--heart)}
+  .head p{margin:0; font-size:12px; color:var(--ink-soft)}
+
+  .card{
+    background:var(--cream); border:2.5px solid var(--line);
+    border-radius:24px; padding:16px; margin-bottom:16px;
+    box-shadow:0 4px 0 #ffe3ee;
+  }
+  .label{
+    font-size:13px; font-weight:700; color:var(--heart);
+    margin:0 0 8px 4px; display:flex; align-items:center; gap:5px;
+  }
+  .label::before{content:"🎀"}
+
+  .grid{display:flex; flex-wrap:wrap; gap:8px}
+  .opt{
+    flex:1 1 auto; min-width:72px; text-align:center;
+    padding:11px 8px; border-radius:16px; cursor:pointer;
+    background:var(--pink-soft); border:2px solid transparent;
+    font-size:14px; font-weight:600; color:var(--ink);
+    transition:.15s; user-select:none;
+  }
+  .opt:active{transform:scale(.96)}
+  .opt.on{
+    background:var(--pink); border-color:var(--pink-deep);
+    color:#a03667; box-shadow:0 2px 0 #ff9ec2;
+  }
+  .opt.dim{opacity:.35; pointer-events:none}
+
+  .qty{display:flex; align-items:center; gap:12px; justify-content:center}
+  .qty button{
+    width:46px; height:46px; border-radius:50%; border:none;
+    background:var(--pink); color:#a03667; font-size:24px; font-weight:700;
+    cursor:pointer; box-shadow:0 3px 0 #ff9ec2;
+  }
+  .qty button:active{transform:translateY(2px); box-shadow:0 1px 0 #ff9ec2}
+  .qty input{
+    width:80px; text-align:center; font-size:24px; font-weight:700;
+    border:2px solid var(--line); border-radius:14px; padding:8px 0;
+    color:var(--heart); background:#fff;
+  }
+  .unit{font-size:12px; color:var(--ink-soft); text-align:center; margin-top:6px}
+
+  .total{
+    background:linear-gradient(135deg,#ffe3ef,#ffd1e3);
+    border:3px solid var(--pink-deep); border-radius:24px;
+    padding:20px; text-align:center; box-shadow:0 5px 0 #ff9ec2;
+  }
+  .total .t1{font-size:13px; color:#a03667; letter-spacing:1px}
+  .total .t2{font-size:44px; font-weight:800; color:#e0447f; margin:4px 0}
+  .total .t2 small{font-size:20px}
+  .total .t3{font-size:12px; color:#a03667}
+  .rate-hint{font-size:12px; color:var(--ink-soft); margin-top:8px; text-align:center}
+  .empty{color:var(--ink-soft); font-size:13px; text-align:center; padding:8px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="head">
+    <div class="emo">🐑💕🐑</div>
+    <h1>hope 算钱器</h1>
+    <p>选区 → 选模式 → 选方式 → 填数量</p>
+  </div>
+
+  <div class="card">
+    <p class="label">选大区</p>
+    <div class="grid" id="zoneGrid"></div>
+  </div>
+
+  <div class="card">
+    <p class="label">开麦 / 无麦</p>
+    <div class="grid" id="modeGrid"></div>
+  </div>
+
+  <div class="card">
+    <p class="label">计费方式</p>
+    <div class="grid" id="billGrid"></div>
+  </div>
+
+  <div class="card">
+    <p class="label">数量</p>
+    <div class="qty">
+      <button onclick="step(-1)">−</button>
+      <input id="qty" type="number" value="1" min="1" onchange="calc()">
+      <button onclick="step(1)">＋</button>
+    </div>
+    <div class="unit" id="unitTip">单位</div>
+  </div>
+
+  <div class="total">
+    <div class="t1">💰 总计</div>
+    <div class="t2" id="totalNum">0<small> 元</small></div>
+    <div class="t3" id="totalDetail">先选一下区吧~</div>
+    <div class="rate-hint" id="rateHint"></div>
+  </div>
+
+</div>
+
+<script>
+// 价目数据：每个区 -> 每个模式 -> {game:单局, half:半h, hour:1h}  null=无此项
+const DATA = {
+  "寻宝区":{
+    modes:{
+      "开麦":{game:3.9, half:12, hour:24},
+      "无麦":{game:2.9, half:9,  hour:18}
+    }
+  },
+  "乐园区":{
+    modes:{
+      "开麦":{game:null, half:10,  hour:20},
+      "无麦":{game:null, half:6.6, hour:13}
+    }
+  },
+  "捣蛋鬼区":{
+    modes:{
+      "开麦":{game:3.9, half:12, hour:24},
+      "无麦":{game:2.9, half:10, hour:20}
+    }
+  },
+  "巅峰区":{
+    modes:{
+      "开麦":{game:3.9, half:null, hour:25},
+      "无麦":{game:2.5, half:null, hour:12}
+    }
+  },
+  "惊魂夜区":{
+    modes:{
+      "开麦":{game:3.9, half:null, hour:20},
+      "无麦":{game:3,   half:null, hour:15},
+      "娱乐":{game:2.5, half:null, hour:12}
+    }
+  },
+  "超燃区":{
+    modes:{
+      "开麦":{game:4.9, half:13.5, hour:25},
+      "无麦":{game:3,   half:12,   hour:20}
+    }
+  }
+};
+
+const BILLS = [
+  {key:"game", name:"单局", unit:"局"},
+  {key:"half", name:"半h",  unit:"个半小时"},
+  {key:"hour", name:"1h",   unit:"小时"}
+];
+
+let sel = {zone:null, mode:null, bill:null};
+
+const zoneGrid=document.getElementById('zoneGrid');
+const modeGrid=document.getElementById('modeGrid');
+const billGrid=document.getElementById('billGrid');
+
+// 渲染区
+Object.keys(DATA).forEach(z=>{
+  const d=document.createElement('div');
+  d.className='opt'; d.textContent=z;
+  d.onclick=()=>{sel.zone=z; sel.mode=null; sel.bill=null; renderZone(); renderMode(); renderBill(); calc();};
+  zoneGrid.appendChild(d);
+});
+
+function renderZone(){
+  [...zoneGrid.children].forEach(c=>c.classList.toggle('on',c.textContent===sel.zone));
+}
+function renderMode(){
+  modeGrid.innerHTML='';
+  if(!sel.zone){modeGrid.innerHTML='<div class="empty">先选区~</div>';return;}
+  Object.keys(DATA[sel.zone].modes).forEach(m=>{
+    const d=document.createElement('div');
+    d.className='opt'+(sel.mode===m?' on':'');
+    d.textContent=m;
+    d.onclick=()=>{sel.mode=m; sel.bill=null; renderMode(); renderBill(); calc();};
+    modeGrid.appendChild(d);
+  });
+}
+function renderBill(){
+  billGrid.innerHTML='';
+  if(!sel.zone||!sel.mode){billGrid.innerHTML='<div class="empty">先选模式~</div>';return;}
+  const p=DATA[sel.zone].modes[sel.mode];
+  BILLS.forEach(b=>{
+    const d=document.createElement('div');
+    const has=p[b.key]!=null;
+    d.className='opt'+(has?'':' dim')+(sel.bill===b.key?' on':'');
+    d.textContent = has ? b.name+' '+p[b.key] : b.name+' —';
+    if(has) d.onclick=()=>{sel.bill=b.key; renderBill(); calc();};
+    billGrid.appendChild(d);
+  });
+}
+
+function step(n){
+  const i=document.getElementById('qty');
+  i.value=Math.max(1,(parseInt(i.value)||1)+n);
+  calc();
+}
+
+function calc(){
+  const num=document.getElementById('totalNum');
+  const det=document.getElementById('totalDetail');
+  const tip=document.getElementById('unitTip');
+  const rh=document.getElementById('rateHint');
+  if(!sel.zone||!sel.mode||!sel.bill){
+    num.innerHTML='0<small> 元</small>';
+    det.textContent='把上面选完就出价啦~';
+    tip.textContent='单位'; rh.textContent='';
+    return;
+  }
+  const price=DATA[sel.zone].modes[sel.mode][sel.bill];
+  const q=Math.max(1,parseInt(document.getElementById('qty').value)||1);
+  const bill=BILLS.find(b=>b.key===sel.bill);
+  const total=price*q;
+  tip.textContent='单位：'+bill.unit;
+  num.innerHTML=(Math.round(total*100)/100)+'<small> 元</small>';
+  det.textContent=`${sel.zone} · ${sel.mode} · ${bill.name}`;
+  rh.textContent=`${price} 元 × ${q} ${bill.unit}`;
+}
+
+renderMode(); renderBill();
+</script>
+</body>
+</html>
