@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>hope 点单</title>
+<style>
+  :root{
+    --bg:#fbf4f7; --card:#ffffff; --pink:#f7c8db; --pink-deep:#e88db1;
+    --pink-line:#f0d5e0; --ink:#5c4650; --ink-soft:#a08792;
+    --accent:#d9578a; --shadow:0 2px 14px rgba(216,120,160,.12);
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent; margin:0; padding:0;}
+  body{
+    font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;
+    background:var(--bg); color:var(--ink); padding:20px 14px 140px;
+    font-size:15px; line-height:1.5;
+  }
+  .wrap{max-width:480px; margin:0 auto;}
+
+  header{margin-bottom:20px; padding:0 4px;}
+  header h1{font-size:21px; font-weight:700; letter-spacing:.5px; color:var(--accent);}
+  header p{font-size:12.5px; color:var(--ink-soft); margin-top:3px;}
+
+  .card{
+    background:var(--card); border:1px solid var(--pink-line);
+    border-radius:18px; padding:16px; margin-bottom:14px; box-shadow:var(--shadow);
+  }
+  .label{font-size:12px; font-weight:600; color:var(--ink-soft); margin-bottom:9px; letter-spacing:.5px;}
+
+  .row{display:flex; flex-wrap:wrap; gap:8px;}
+  .chip{
+    padding:9px 14px; border-radius:12px; cursor:pointer;
+    background:var(--bg); border:1.5px solid transparent;
+    font-size:14px; font-weight:500; color:var(--ink); transition:.14s; user-select:none;
+  }
+  .chip:active{transform:scale(.97);}
+  .chip.on{background:var(--pink); border-color:var(--pink-deep); color:#9c3565; font-weight:600;}
+  .chip.dim{opacity:.3; pointer-events:none;}
+  .chip .p{font-size:12px; color:var(--ink-soft); margin-left:5px;}
+  .chip.on .p{color:#b04d7e;}
+
+  .qtybar{display:flex; align-items:center; gap:14px;}
+  .qtybar button{
+    width:40px; height:40px; border-radius:11px; border:1.5px solid var(--pink-line);
+    background:#fff; color:var(--accent); font-size:22px; font-weight:600; cursor:pointer;
+  }
+  .qtybar button:active{background:var(--pink);}
+  .qtybar input{
+    width:64px; height:40px; text-align:center; font-size:19px; font-weight:700;
+    border:1.5px solid var(--pink-line); border-radius:11px; color:var(--accent); background:#fff;
+  }
+  .qtybar .u{font-size:12.5px; color:var(--ink-soft);}
+
+  .addbtn{
+    width:100%; margin-top:2px; padding:14px; border:none; border-radius:14px;
+    background:var(--accent); color:#fff; font-size:15px; font-weight:600;
+    cursor:pointer; box-shadow:0 3px 10px rgba(217,87,138,.3); transition:.14s;
+  }
+  .addbtn:active{transform:translateY(1px);}
+  .addbtn:disabled{background:#e9c3d3; box-shadow:none; cursor:default;}
+
+  .order-title{font-size:13px; font-weight:700; color:var(--ink); margin:22px 4px 10px;}
+  .item{
+    display:flex; align-items:center; justify-content:space-between;
+    background:#fff; border:1px solid var(--pink-line); border-radius:14px;
+    padding:12px 14px; margin-bottom:8px; box-shadow:var(--shadow);
+  }
+  .item .info{flex:1; min-width:0;}
+  .item .info .name{font-size:14px; font-weight:600; color:var(--ink);}
+  .item .info .sub{font-size:12px; color:var(--ink-soft); margin-top:2px;}
+  .item .money{font-size:15px; font-weight:700; color:var(--accent); margin:0 12px; white-space:nowrap;}
+  .item .del{
+    width:28px; height:28px; border-radius:8px; border:none; background:var(--bg);
+    color:var(--ink-soft); font-size:16px; cursor:pointer; flex-shrink:0;
+  }
+  .item .del:active{background:var(--pink);}
+  .empty-order{text-align:center; color:var(--ink-soft); font-size:13px; padding:18px 0;}
+
+  .footer{
+    position:fixed; left:0; right:0; bottom:0;
+    background:rgba(255,255,255,.94); backdrop-filter:blur(8px);
+    border-top:1px solid var(--pink-line); padding:14px 16px calc(14px + env(safe-area-inset-bottom));
+  }
+  .footer .inner{max-width:480px; margin:0 auto; display:flex; align-items:center; justify-content:space-between; gap:12px;}
+  .footer .sum .l{font-size:12px; color:var(--ink-soft);}
+  .footer .sum .n{font-size:26px; font-weight:800; color:var(--accent);}
+  .footer .sum .n small{font-size:14px;}
+  .footer .clear{
+    padding:11px 18px; border-radius:12px; border:1.5px solid var(--pink-line);
+    background:#fff; color:var(--ink-soft); font-size:13px; font-weight:600; cursor:pointer;
+  }
+  .footer .clear:active{background:var(--pink);}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>hope 点单</h1>
+    <p>选区 · 选模式 · 选方式 · 加入订单</p>
+  </header>
+
+  <div class="card">
+    <div class="label">大区</div>
+    <div class="row" id="zoneRow"></div>
+  </div>
+
+  <div class="card">
+    <div class="label">模式</div>
+    <div class="row" id="modeRow"><span class="empty-order" style="padding:4px">先选区</span></div>
+  </div>
+
+  <div class="card">
+    <div class="label">计费方式</div>
+    <div class="row" id="billRow"><span class="empty-order" style="padding:4px">先选模式</span></div>
+  </div>
+
+  <div class="card">
+    <div class="label">数量</div>
+    <div class="qtybar">
+      <button onclick="step(-1)">−</button>
+      <input id="qty" type="number" value="1" min="1" onchange="clampQty()">
+      <button onclick="step(1)">＋</button>
+      <span class="u" id="unit"></span>
+    </div>
+  </div>
+
+  <button class="addbtn" id="addBtn" onclick="addItem()" disabled>加入订单</button>
+
+  <div class="order-title">当前订单</div>
+  <div id="orderList"><div class="empty-order">还没有点单</div></div>
+</div>
+
+<div class="footer">
+  <div class="inner">
+    <div class="sum">
+      <div class="l">合计</div>
+      <div class="n" id="grandTotal">0<small> 元</small></div>
+    </div>
+    <button class="clear" onclick="clearAll()">清空</button>
+  </div>
+</div>
+
+<script>
+const DATA={
+  "寻宝区":{"开麦":{game:3.9,half:12,hour:24},"无麦":{game:2.9,half:9,hour:18}},
+  "乐园区":{"开麦":{game:null,half:10,hour:20},"无麦":{game:null,half:6.6,hour:13}},
+  "捣蛋鬼区":{"开麦":{game:3.9,half:12,hour:24},"无麦":{game:2.9,half:10,hour:20}},
+  "巅峰区":{"开麦":{game:3.9,half:null,hour:25},"无麦":{game:2.5,half:null,hour:12}},
+  "惊魂夜区":{"开麦":{game:3.9,half:null,hour:20},"无麦":{game:3,half:null,hour:15},"娱乐":{game:2.5,half:null,hour:12}},
+  "超燃区":{"开麦":{game:4.9,half:13.5,hour:25},"无麦":{game:3,half:12,hour:20}}
+};
+const BILLS=[{k:"game",n:"单局",u:"局"},{k:"half",n:"半h",u:"个半小时"},{k:"hour",n:"1h",u:"小时"}];
+
+let sel={zone:null,mode:null,bill:null};
+let order=[];
+
+const zoneRow=document.getElementById('zoneRow');
+const modeRow=document.getElementById('modeRow');
+const billRow=document.getElementById('billRow');
+
+Object.keys(DATA).forEach(z=>{
+  const c=document.createElement('div');
+  c.className='chip'; c.textContent=z;
+  c.onclick=()=>{sel={zone:z,mode:null,bill:null}; drawZone(); drawMode(); drawBill(); syncBtn();};
+  zoneRow.appendChild(c);
+});
+function drawZone(){[...zoneRow.children].forEach(c=>c.classList.toggle('on',c.textContent===sel.zone));}
+
+function drawMode(){
+  modeRow.innerHTML='';
+  if(!sel.zone){modeRow.innerHTML='<span class="empty-order" style="padding:4px">先选区</span>';return;}
+  Object.keys(DATA[sel.zone]).forEach(m=>{
+    const c=document.createElement('div');
+    c.className='chip'+(sel.mode===m?' on':''); c.textContent=m;
+    c.onclick=()=>{sel.mode=m; sel.bill=null; drawMode(); drawBill(); syncBtn();};
+    modeRow.appendChild(c);
+  });
+}
+function drawBill(){
+  billRow.innerHTML='';
+  if(!sel.zone||!sel.mode){billRow.innerHTML='<span class="empty-order" style="padding:4px">先选模式</span>';return;}
+  const p=DATA[sel.zone][sel.mode];
+  BILLS.forEach(b=>{
+    const has=p[b.k]!=null;
+    const c=document.createElement('div');
+    c.className='chip'+(has?'':' dim')+(sel.bill===b.k?' on':'');
+    c.innerHTML=has?`${b.n}<span class="p">${p[b.k]}</span>`:`${b.n}<span class="p">—</span>`;
+    if(has)c.onclick=()=>{sel.bill=b.k; drawBill(); syncBtn();};
+    billRow.appendChild(c);
+  });
+}
+function syncBtn(){
+  const ok=sel.zone&&sel.mode&&sel.bill;
+  document.getElementById('addBtn').disabled=!ok;
+  document.getElementById('unit').textContent=ok?BILLS.find(b=>b.k===sel.bill).u:'';
+}
+function step(n){const i=document.getElementById('qty'); i.value=Math.max(1,(parseInt(i.value)||1)+n);}
+function clampQty(){const i=document.getElementById('qty'); i.value=Math.max(1,parseInt(i.value)||1);}
+
+function addItem(){
+  if(!(sel.zone&&sel.mode&&sel.bill))return;
+  const q=Math.max(1,parseInt(document.getElementById('qty').value)||1);
+  const b=BILLS.find(x=>x.k===sel.bill);
+  const price=DATA[sel.zone][sel.mode][sel.bill];
+  order.push({zone:sel.zone,mode:sel.mode,bill:b.n,unit:b.u,price,qty:q,sub:price*q});
+  document.getElementById('qty').value=1;
+  drawOrder();
+}
+function removeItem(i){order.splice(i,1); drawOrder();}
+function clearAll(){if(order.length&&!confirm('清空当前订单？'))return; order=[]; drawOrder();}
+
+function drawOrder(){
+  const list=document.getElementById('orderList');
+  if(!order.length){list.innerHTML='<div class="empty-order">还没有点单</div>';}
+  else{
+    list.innerHTML='';
+    order.forEach((it,i)=>{
+      const row=document.createElement('div');
+      row.className='item';
+      row.innerHTML=`<div class="info">
+        <div class="name">${it.zone} · ${it.mode}</div>
+        <div class="sub">${it.bill}　${it.price}元 × ${it.qty}${it.unit}</div>
+      </div>
+      <div class="money">${round(it.sub)}元</div>
+      <button class="del" onclick="removeItem(${i})">×</button>`;
+      list.appendChild(row);
+    });
+  }
+  const total=order.reduce((s,it)=>s+it.sub,0);
+  document.getElementById('grandTotal').innerHTML=round(total)+'<small> 元</small>';
+}
+function round(n){return Math.round(n*100)/100;}
+</script>
+</body>
+</html>
