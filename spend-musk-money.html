@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>花光马斯克的一万亿</title>
+<style>
+  :root{
+    --ink:#1a1410;
+    --paper:#f6ecd8;
+    --paper2:#efe0c2;
+    --red:#c1272d;
+    --red2:#e63946;
+    --gold:#c99b3f;
+    --gold2:#f0c05a;
+    --green:#2f7d4f;
+    --shadow: rgba(60,30,10,.18);
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;padding:0;}
+  body{
+    font-family:"PingFang SC","Hiragino Sans GB","Microsoft YaHei",system-ui,sans-serif;
+    background:
+      radial-gradient(circle at 20% 0%, rgba(240,192,90,.25), transparent 45%),
+      radial-gradient(circle at 90% 10%, rgba(193,39,45,.18), transparent 40%),
+      var(--paper);
+    color:var(--ink);
+    min-height:100vh;
+    padding-bottom:120px;
+  }
+
+  /* 顶部余额条 */
+  .topbar{
+    position:sticky;top:0;z-index:50;
+    background:linear-gradient(160deg,#7a1418,#c1272d 60%,#a51d22);
+    color:#fff;
+    padding:14px 16px 16px;
+    box-shadow:0 6px 20px var(--shadow);
+    border-bottom:3px solid var(--gold);
+  }
+  .topbar .who{
+    display:flex;align-items:center;gap:10px;
+    font-size:13px;letter-spacing:.5px;opacity:.92;
+  }
+  .topbar .who .badge{
+    background:var(--gold);color:#4a2b06;font-weight:800;
+    padding:2px 8px;border-radius:20px;font-size:11px;
+  }
+  .balance{
+    margin-top:6px;
+    font-variant-numeric:tabular-nums;
+    font-weight:900;
+    font-size:30px;
+    letter-spacing:.5px;
+    text-shadow:0 2px 0 rgba(0,0,0,.25);
+    display:flex;align-items:baseline;gap:8px;
+    transition:color .15s;
+  }
+  .balance .cny{font-size:14px;font-weight:600;opacity:.85;}
+  .balance.flash{color:var(--gold2);}
+  .barwrap{
+    margin-top:10px;height:8px;border-radius:8px;
+    background:rgba(0,0,0,.25);overflow:hidden;
+  }
+  .bar{height:100%;width:0%;background:linear-gradient(90deg,var(--gold2),var(--gold));transition:width .3s;}
+  .spent-line{margin-top:8px;font-size:12px;opacity:.9;display:flex;justify-content:space-between;}
+
+  /* 标题 */
+  .hero{
+    text-align:center;padding:22px 16px 6px;
+  }
+  .hero h1{
+    margin:0;font-size:26px;font-weight:900;letter-spacing:1px;
+    color:var(--red);
+    text-shadow:1px 1px 0 var(--gold2);
+  }
+  .hero p{margin:6px 0 0;font-size:13px;color:#6b5333;}
+
+  /* 商品网格 */
+  .grid{
+    display:grid;grid-template-columns:repeat(2,1fr);gap:12px;
+    padding:14px;max-width:680px;margin:0 auto;
+  }
+  @media(min-width:560px){ .grid{grid-template-columns:repeat(3,1fr);} }
+
+  .card{
+    background:linear-gradient(180deg,#fffaf0,var(--paper2));
+    border:1.5px solid #d8bd86;
+    border-radius:16px;
+    padding:12px 12px 14px;
+    display:flex;flex-direction:column;align-items:center;
+    box-shadow:0 3px 10px var(--shadow);
+    position:relative;overflow:hidden;
+  }
+  .card .emoji{font-size:40px;line-height:1;margin:4px 0 6px;filter:drop-shadow(0 2px 2px rgba(0,0,0,.15));}
+  .card .name{font-weight:700;font-size:14px;text-align:center;min-height:36px;display:flex;align-items:center;}
+  .card .price{color:var(--red);font-weight:800;font-size:13px;margin-top:2px;font-variant-numeric:tabular-nums;}
+  .card .owned{
+    position:absolute;top:8px;right:8px;
+    background:var(--green);color:#fff;font-size:11px;font-weight:800;
+    min-width:22px;height:22px;border-radius:20px;
+    display:none;align-items:center;justify-content:center;padding:0 6px;
+  }
+  .card.has .owned{display:flex;}
+
+  .btns{display:flex;gap:6px;margin-top:10px;width:100%;}
+  .btns button{
+    flex:1;border:none;border-radius:10px;padding:8px 0;font-weight:800;font-size:15px;
+    cursor:pointer;font-family:inherit;transition:transform .06s, filter .1s;
+  }
+  .btns button:active{transform:scale(.92);}
+  .buy{background:linear-gradient(180deg,var(--red2),var(--red));color:#fff;box-shadow:0 2px 0 #7a1418;}
+  .sell{background:#e9dcc0;color:#8a6a2e;box-shadow:0 2px 0 #c9b482;}
+  .buy:disabled{filter:grayscale(.6) brightness(.9);opacity:.55;cursor:not-allowed;box-shadow:none;}
+  .sell:disabled{opacity:.4;cursor:not-allowed;box-shadow:none;}
+
+  /* 底部结算按钮 */
+  .footer{
+    position:fixed;left:0;right:0;bottom:0;z-index:60;
+    background:linear-gradient(0deg,var(--paper),rgba(246,236,216,.85));
+    padding:10px 16px calc(12px + env(safe-area-inset-bottom));
+    display:flex;gap:10px;justify-content:center;
+    border-top:1.5px solid #d8bd86;
+    backdrop-filter:blur(4px);
+  }
+  .footer button{
+    border:none;border-radius:12px;padding:12px 18px;font-weight:800;font-size:15px;
+    cursor:pointer;font-family:inherit;box-shadow:0 3px 8px var(--shadow);
+  }
+  .receipt-btn{background:linear-gradient(180deg,var(--gold2),var(--gold));color:#4a2b06;}
+  .reset-btn{background:#e9dcc0;color:#8a6a2e;}
+
+  /* 飘钱动画 */
+  .float{
+    position:fixed;z-index:200;pointer-events:none;
+    font-weight:900;font-size:18px;
+    animation:floatUp .9s ease-out forwards;
+  }
+  @keyframes floatUp{
+    0%{opacity:1;transform:translateY(0) scale(1);}
+    100%{opacity:0;transform:translateY(-60px) scale(1.3);}
+  }
+
+  /* 弹窗 */
+  .modal{
+    position:fixed;inset:0;z-index:300;display:none;
+    background:rgba(30,15,5,.6);
+    align-items:center;justify-content:center;padding:18px;
+  }
+  .modal.show{display:flex;}
+  .sheet{
+    background:var(--paper);border-radius:18px;max-width:420px;width:100%;
+    max-height:82vh;overflow:auto;padding:20px;
+    border:2px solid var(--gold);box-shadow:0 12px 40px rgba(0,0,0,.4);
+  }
+  .sheet h2{margin:0 0 4px;color:var(--red);font-size:20px;text-align:center;}
+  .sheet .sub{text-align:center;font-size:12px;color:#6b5333;margin-bottom:14px;}
+  .rrow{display:flex;justify-content:space-between;gap:8px;font-size:14px;padding:7px 0;border-bottom:1px dashed #cbb488;}
+  .rrow .n{flex:1;}
+  .rrow .q{color:#8a6a2e;font-weight:700;white-space:nowrap;}
+  .rrow .t{color:var(--red);font-weight:800;font-variant-numeric:tabular-nums;white-space:nowrap;}
+  .rtotal{display:flex;justify-content:space-between;font-size:16px;font-weight:900;margin-top:12px;padding-top:10px;border-top:2px solid var(--ink);}
+  .rtotal .t{color:var(--red);}
+  .empty{text-align:center;color:#8a6a2e;padding:24px 0;}
+  .close{
+    display:block;width:100%;margin-top:16px;border:none;border-radius:12px;
+    padding:12px;font-weight:800;font-size:15px;font-family:inherit;cursor:pointer;
+    background:linear-gradient(180deg,var(--red2),var(--red));color:#fff;
+  }
+  .win{
+    text-align:center;padding:10px 0;
+  }
+  .win .big{font-size:44px;}
+  .win h2{font-size:22px;}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="who">
+    <span>💰 你正在替 <b>埃隆·马斯克</b> 花钱</span>
+    <span class="badge">全球首富</span>
+  </div>
+  <div class="balance" id="balance"></div>
+  <div class="barwrap"><div class="bar" id="bar"></div></div>
+  <div class="spent-line">
+    <span>已花掉 <b id="spentPct">0%</b></span>
+    <span id="spentAmt">¥0</span>
+  </div>
+</div>
+
+<div class="hero">
+  <h1>花光他的一万亿</h1>
+  <p>本金：$1,000,000,000,000（约 ¥7.2 万亿）· 买了不喜欢能退 · 敢花光算你狠</p>
+</div>
+
+<div class="grid" id="grid"></div>
+
+<div class="footer">
+  <button class="receipt-btn" onclick="openReceipt()">🧾 我的账单</button>
+  <button class="reset-btn" onclick="resetAll()">↺ 重置</button>
+</div>
+
+<div class="modal" id="modal">
+  <div class="sheet" id="sheet"></div>
+</div>
+
+<script>
+// 本金：1万亿美元，按汇率 7.2 换成人民币
+const USD = 1_000_000_000_000;
+const RATE = 7.2;
+const TOTAL = USD * RATE; // 人民币总额 7.2万亿
+
+// 商品：价格为人民币。从辣条到火星飞船，越来越离谱
+const ITEMS = [
+  {e:"🌶️", n:"一包辣条", p:2},
+  {e:"🧋", n:"一杯奶茶", p:18},
+  {e:"🎮", n:"3A 游戏一份", p:298},
+  {e:"👟", n:"限量球鞋", p:1500},
+  {e:"📱", n:"顶配 iPhone", p:12999},
+  {e:"💻", n:"顶配 MacBook", p:39999},
+  {e:"💍", n:"求婚钻戒", p:88000},
+  {e:"🏍️", n:"哈雷摩托", p:180000},
+  {e:"🚗", n:"特斯拉 Model S", p:800000},
+  {e:"🏠", n:"三线城市一套房", p:1200000},
+  {e:"🏡", n:"一线城市大平层", p:12000000},
+  {e:"🐎", n:"纯血赛马", p:25000000},
+  {e:"🏎️", n:"布加迪超跑", p:35000000},
+  {e:"⛵", n:"豪华游艇", p:150000000},
+  {e:"🏢", n:"CBD 一栋写字楼", p:800000000},
+  {e:"✈️", n:"波音私人客机", p:2500000000},
+  {e:"🏰", n:"一座私人海岛", p:6000000000},
+  {e:"⚽", n:"英超豪门球队", p:35000000000},
+  {e:"🏦", n:"收购一家银行", p:120000000000},
+  {e:"🚀", n:"一发猎鹰火箭", p:450000000},
+  {e:"🛰️", n:"发射一颗卫星", p:1500000000},
+  {e:"🏭", n:"超级工厂 Gigafactory", p:36000000000},
+  {e:"🌉", n:"造一座跨海大桥", p:80000000000},
+  {e:"🚢", n:"一艘航空母舰", p:95000000000},
+  {e:"🌕", n:"载人登月计划", p:700000000000},
+  {e:"🔴", n:"载人火星飞船", p:2000000000000},
+];
+
+let cart = {}; // index -> qty
+let balance = TOTAL;
+
+const $ = id => document.getElementById(id);
+
+function fmtCNY(n){
+  if(n >= 1e12) return "¥" + (n/1e12).toFixed(2).replace(/\.00$/,"") + " 万亿";
+  if(n >= 1e8)  return "¥" + (n/1e8).toFixed(2).replace(/\.00$/,"") + " 亿";
+  if(n >= 1e4)  return "¥" + (n/1e4).toFixed(2).replace(/\.00$/,"") + " 万";
+  return "¥" + n.toLocaleString("zh-CN");
+}
+function fmtFull(n){ return "¥" + Math.round(n).toLocaleString("zh-CN"); }
+
+function render(){
+  const grid = $("grid");
+  grid.innerHTML = "";
+  ITEMS.forEach((it,i)=>{
+    const qty = cart[i]||0;
+    const canBuy = balance >= it.p;
+    const card = document.createElement("div");
+    card.className = "card" + (qty>0 ? " has":"");
+    card.innerHTML = `
+      <div class="owned">×${qty}</div>
+      <div class="emoji">${it.e}</div>
+      <div class="name">${it.n}</div>
+      <div class="price">${fmtCNY(it.p)}</div>
+      <div class="btns">
+        <button class="sell" ${qty>0?"":"disabled"} data-sell="${i}">卖</button>
+        <button class="buy" ${canBuy?"":"disabled"} data-buy="${i}">买</button>
+      </div>`;
+    grid.appendChild(card);
+  });
+  updateBalance();
+}
+
+function updateBalance(){
+  const spent = TOTAL - balance;
+  const pct = (spent/TOTAL*100);
+  const bal = $("balance");
+  bal.innerHTML = `${fmtFull(balance)} <span class="cny">剩余</span>`;
+  $("bar").style.width = pct + "%";
+  $("spentPct").textContent = pct.toFixed(2) + "%";
+  $("spentAmt").textContent = fmtCNY(spent);
+}
+
+function flash(text,color,x,y){
+  const bal = $("balance");
+  bal.classList.add("flash");
+  setTimeout(()=>bal.classList.remove("flash"),200);
+  const f = document.createElement("div");
+  f.className = "float";
+  f.textContent = text;
+  f.style.color = color;
+  f.style.left = (x-20)+"px";
+  f.style.top = (y-30)+"px";
+  document.body.appendChild(f);
+  setTimeout(()=>f.remove(),900);
+}
+
+document.getElementById("grid").addEventListener("click",e=>{
+  const buy = e.target.closest("[data-buy]");
+  const sell = e.target.closest("[data-sell]");
+  const rect = e.target.getBoundingClientRect();
+  if(buy){
+    const i = +buy.dataset.buy;
+    if(balance >= ITEMS[i].p){
+      balance -= ITEMS[i].p;
+      cart[i] = (cart[i]||0)+1;
+      flash("-"+fmtCNY(ITEMS[i].p), "#e63946", rect.left, rect.top);
+      render();
+      checkWin();
+    }
+  }
+  if(sell){
+    const i = +sell.dataset.sell;
+    if((cart[i]||0)>0){
+      balance += ITEMS[i].p;
+      cart[i]--;
+      if(cart[i]===0) delete cart[i];
+      flash("+"+fmtCNY(ITEMS[i].p), "#2f7d4f", rect.left, rect.top);
+      render();
+    }
+  }
+});
+
+function openReceipt(){
+  const sheet = $("sheet");
+  const entries = Object.keys(cart);
+  if(entries.length===0){
+    sheet.innerHTML = `
+      <h2>🧾 我的账单</h2>
+      <div class="sub">花钱使我快乐</div>
+      <div class="empty">你还一毛没花呢，抠门💀<br>回去买点东西吧</div>
+      <button class="close" onclick="closeModal()">继续挥霍</button>`;
+  }else{
+    let rows = "";
+    let total = 0;
+    entries.forEach(i=>{
+      const it = ITEMS[i], q = cart[i], t = it.p*q;
+      total += t;
+      rows += `<div class="rrow">
+        <span class="n">${it.e} ${it.n}</span>
+        <span class="q">×${q}</span>
+        <span class="t">${fmtCNY(t)}</span>
+      </div>`;
+    });
+    sheet.innerHTML = `
+      <h2>🧾 我的账单</h2>
+      <div class="sub">败家进度报告</div>
+      ${rows}
+      <div class="rtotal"><span>总计花掉</span><span class="t">${fmtCNY(total)}</span></div>
+      <div class="rrow" style="border:none;margin-top:8px;"><span class="n">还剩</span><span class="t" style="color:#2f7d4f">${fmtCNY(balance)}</span></div>
+      <button class="close" onclick="closeModal()">继续挥霍</button>`;
+  }
+  $("modal").classList.add("show");
+}
+
+function checkWin(){
+  if(balance === 0){
+    const sheet = $("sheet");
+    sheet.innerHTML = `
+      <div class="win">
+        <div class="big">🎉💸🎉</div>
+        <h2>恭喜！你花光了马斯克的一万亿！</h2>
+        <div class="sub">全球首富的钱被你精准清零，这操作神了</div>
+        <div class="rrow" style="border:none;justify-content:center;font-weight:800;">剩余余额：¥0</div>
+        <button class="close" onclick="closeModal()">再嘚瑟一会儿</button>
+      </div>`;
+    $("modal").classList.add("show");
+  }
+}
+
+function closeModal(){ $("modal").classList.remove("show"); }
+$("modal").addEventListener("click",e=>{ if(e.target.id==="modal") closeModal(); });
+
+function resetAll(){
+  cart = {}; balance = TOTAL; render(); closeModal();
+}
+
+render();
+</script>
+</body>
+</html>
