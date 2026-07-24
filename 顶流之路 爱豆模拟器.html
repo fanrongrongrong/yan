@@ -1,0 +1,792 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>顶流之路 · 爱豆模拟器</title>
+<style>
+:root{
+  --bg:#0a0612; --panel:#160f24; --panel2:#1e1435; --ink:#f4ecff;
+  --dim:#9d8fc4; --line:#2f2350;
+  --neon:#ff2d78; --neon2:#00e5ff; --gold:#ffd24a; --lime:#c6ff4a;
+  --danger:#ff4d5e; --ok:#3ddc97;
+  --news:#ff2d78;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;margin:0;padding:0}
+html,body{background:var(--bg);color:var(--ink);font-family:-apple-system,"PingFang SC","Microsoft YaHei",system-ui,sans-serif}
+body{max-width:520px;margin:0 auto;min-height:100vh;position:relative;overflow-x:hidden}
+::-webkit-scrollbar{width:0;height:0}
+
+/* ===== 头条滚动条 ===== */
+.ticker{position:sticky;top:0;z-index:40;background:linear-gradient(90deg,var(--neon),#b3006b);
+  display:flex;align-items:center;height:30px;font-size:12px;font-weight:800;letter-spacing:.5px;overflow:hidden;box-shadow:0 2px 14px #ff2d7855}
+.ticker .tag{background:#000;color:#fff;padding:0 9px;height:100%;display:flex;align-items:center;flex:none;font-style:italic;letter-spacing:2px}
+.ticker .track{white-space:nowrap;animation:scroll 18s linear infinite;padding-left:100%}
+@keyframes scroll{to{transform:translateX(-100%)}}
+
+/* ===== 顶部身份 ===== */
+.hud{padding:14px 16px 8px;background:radial-gradient(120% 100% at 0% 0%,#2a1550 0%,transparent 60%),var(--panel)}
+.name-row{display:flex;align-items:center;gap:10px}
+.avatar{width:46px;height:46px;border-radius:14px;flex:none;display:flex;align-items:center;justify-content:center;font-size:24px;
+  background:linear-gradient(135deg,var(--neon),var(--neon2));box-shadow:0 0 18px #ff2d7866}
+.who h1{font-size:19px;font-weight:900;letter-spacing:.5px;line-height:1.1}
+.who .tier{font-size:11px;color:var(--gold);font-weight:800;letter-spacing:1px;margin-top:3px}
+.who .tier b{color:var(--dim);font-weight:600}
+
+/* ===== 统计卡片 ===== */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;padding:12px 16px 6px}
+.stat{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:8px 6px;text-align:center;position:relative;overflow:hidden}
+.stat .k{font-size:9px;color:var(--dim);letter-spacing:.5px;font-weight:700}
+.stat .v{font-size:15px;font-weight:900;margin-top:2px}
+.stat.fans .v{color:var(--neon)} .stat.buzz .v{color:var(--neon2)}
+.stat.rep .v{color:var(--lime)} .stat.money .v{color:var(--gold)}
+.bars{padding:2px 16px 4px}
+.bar-line{display:flex;align-items:center;gap:8px;margin:6px 0;font-size:11px;font-weight:700;color:var(--dim)}
+.bar-line .lbl{width:52px;flex:none}
+.bar-out{flex:1;height:9px;background:#241a3d;border-radius:6px;overflow:hidden;position:relative}
+.bar-in{height:100%;border-radius:6px;transition:width .5s}
+.bar-in.mood{background:linear-gradient(90deg,#ffd24a,#ff9e4a)}
+.bar-in.black{background:linear-gradient(90deg,#7a2fff,#ff2d78)}
+.bar-line .num{width:34px;text-align:right;color:var(--ink)}
+
+/* ===== 主区域 ===== */
+.stage{padding:6px 16px 120px}
+.week-pill{display:inline-flex;align-items:center;gap:6px;background:#000;border:1px solid var(--line);
+  border-radius:20px;padding:4px 12px;font-size:11px;font-weight:800;color:var(--neon2);letter-spacing:1px;margin:4px 0 12px}
+
+/* 事件卡 */
+.card{background:linear-gradient(180deg,var(--panel2),var(--panel));border:1px solid var(--line);
+  border-radius:18px;padding:16px;box-shadow:0 8px 30px #0008;animation:pop .35s cubic-bezier(.2,1.2,.4,1)}
+@keyframes pop{from{opacity:0;transform:translateY(14px) scale(.97)}to{opacity:1;transform:none}}
+.card .etag{display:inline-block;font-size:10px;font-weight:900;letter-spacing:1.5px;padding:3px 10px;border-radius:8px;margin-bottom:10px}
+.etag.hot{background:#ff2d7822;color:var(--neon);border:1px solid #ff2d7855}
+.etag.biz{background:#ffd24a22;color:var(--gold);border:1px solid #ffd24a55}
+.etag.crisis{background:#ff4d5e22;color:var(--danger);border:1px solid #ff4d5e55}
+.etag.fan{background:#00e5ff22;color:var(--neon2);border:1px solid #00e5ff55}
+.etag.life{background:#c6ff4a22;color:var(--lime);border:1px solid #c6ff4a55}
+.card h2{font-size:17px;font-weight:900;line-height:1.35;margin-bottom:8px}
+.card .desc{font-size:13.5px;line-height:1.65;color:#d8ccf5}
+.card .desc .hl{color:var(--neon2);font-weight:800}
+
+/* 选项 */
+.choices{margin-top:14px;display:flex;flex-direction:column;gap:9px}
+.choice{background:#0d0820;border:1px solid var(--line);border-radius:14px;padding:12px 14px;
+  font-size:13.5px;font-weight:700;color:var(--ink);text-align:left;cursor:pointer;transition:.15s;position:relative;line-height:1.4}
+.choice:active{transform:scale(.98)}
+.choice:hover{border-color:var(--neon);background:#1a0f2e}
+.choice .cs{font-size:10px;color:var(--dim);font-weight:600;display:block;margin-top:3px}
+.choice .lock{color:var(--danger)}
+
+/* 结果反馈 */
+.result{margin-top:14px;background:#0d0820;border:1px dashed var(--line);border-radius:14px;padding:14px;animation:pop .3s}
+.result .rtitle{font-size:13px;font-weight:900;margin-bottom:8px;letter-spacing:.5px}
+.result .deltas{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+.chip{font-size:11px;font-weight:800;padding:3px 9px;border-radius:8px}
+.chip.up{background:#3ddc9722;color:var(--ok)}
+.chip.down{background:#ff4d5e22;color:var(--danger)}
+.result .rdesc{font-size:12.5px;line-height:1.6;color:#c8bce8}
+.next-btn{margin-top:12px;width:100%;background:linear-gradient(90deg,var(--neon),var(--neon2));
+  border:none;border-radius:14px;padding:14px;font-size:15px;font-weight:900;color:#fff;cursor:pointer;letter-spacing:1px;box-shadow:0 6px 20px #ff2d7844}
+.next-btn:active{transform:scale(.98)}
+
+/* 行动菜单 */
+.actions-title{font-size:12px;font-weight:900;color:var(--dim);letter-spacing:2px;margin:2px 0 10px}
+.act-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.act{background:var(--panel2);border:1px solid var(--line);border-radius:16px;padding:14px 12px;cursor:pointer;transition:.15s;position:relative;overflow:hidden}
+.act:active{transform:scale(.97)}
+.act:hover{border-color:var(--neon2)}
+.act .ico{font-size:26px;margin-bottom:6px}
+.act .an{font-size:14px;font-weight:900}
+.act .ad{font-size:10.5px;color:var(--dim);margin-top:3px;line-height:1.4}
+.act .cost{position:absolute;top:8px;right:10px;font-size:10px;font-weight:800;color:var(--gold)}
+.act.disabled{opacity:.4;pointer-events:none}
+
+/* 顶部弹幕/超话按钮 */
+.fandom-btn{position:fixed;bottom:20px;right:calc(50% - 250px);z-index:30}
+@media(max-width:520px){.fandom-btn{right:16px}}
+.fandom-btn button{background:linear-gradient(135deg,var(--neon2),#0088ff);border:none;width:56px;height:56px;border-radius:50%;
+  font-size:24px;box-shadow:0 6px 24px #00e5ff66;cursor:pointer;color:#fff}
+
+/* 弹窗 */
+.modal{position:fixed;inset:0;z-index:60;background:#000c;display:none;align-items:center;justify-content:center;padding:20px;animation:fade .2s}
+.modal.on{display:flex}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+.sheet{background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:20px;width:100%;max-width:440px;max-height:80vh;overflow-y:auto}
+.sheet h3{font-size:17px;font-weight:900;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.sheet .close{margin-top:14px;width:100%;background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:12px;color:var(--ink);font-weight:800;cursor:pointer}
+
+/* 超话动态 */
+.weibo{background:#0d0820;border:1px solid var(--line);border-radius:12px;padding:11px 13px;margin-bottom:9px}
+.weibo .u{font-size:12px;font-weight:800;color:var(--neon2)}
+.weibo .u .v{color:var(--gold);font-size:10px}
+.weibo .t{font-size:12.5px;line-height:1.5;margin-top:4px;color:#d8ccf5}
+.weibo .m{font-size:10px;color:var(--dim);margin-top:6px;display:flex;gap:14px}
+
+/* 开场 */
+.intro{padding:40px 24px;text-align:center}
+.intro .logo{font-size:13px;letter-spacing:4px;color:var(--neon2);font-weight:800}
+.intro h1{font-size:34px;font-weight:900;margin:8px 0 4px;background:linear-gradient(90deg,var(--neon),var(--gold),var(--neon2));
+  -webkit-background-clip:text;background-clip:text;color:transparent;letter-spacing:1px}
+.intro .sub{font-size:13px;color:var(--dim);line-height:1.7;margin-bottom:26px}
+.field{text-align:left;margin-bottom:16px}
+.field label{font-size:12px;font-weight:800;color:var(--dim);letter-spacing:1px;display:block;margin-bottom:7px}
+.field input{width:100%;background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:13px;color:var(--ink);font-size:15px;font-weight:700}
+.field input:focus{outline:none;border-color:var(--neon)}
+.gender-row{display:flex;gap:8px}
+.gender-row .g{flex:1;background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:12px;text-align:center;font-size:13px;font-weight:800;cursor:pointer;transition:.15s}
+.gender-row .g.sel{border-color:var(--neon);background:#ff2d7822;color:var(--neon)}
+.concept-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.concept{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:11px;cursor:pointer;transition:.15s;text-align:left}
+.concept.sel{border-color:var(--gold);background:#ffd24a15}
+.concept .cn{font-size:13px;font-weight:900}
+.concept .cd{font-size:10px;color:var(--dim);margin-top:3px;line-height:1.4}
+.start-btn{width:100%;background:linear-gradient(90deg,var(--neon),var(--neon2));border:none;border-radius:14px;padding:16px;font-size:16px;font-weight:900;color:#fff;cursor:pointer;letter-spacing:2px;margin-top:8px;box-shadow:0 8px 26px #ff2d7855}
+.start-btn:active{transform:scale(.98)}
+
+/* 结局 */
+.ending{padding:50px 24px;text-align:center;animation:fade .6s}
+.ending .em{font-size:64px;margin-bottom:10px}
+.ending h1{font-size:28px;font-weight:900;margin-bottom:6px}
+.ending .etag2{font-size:12px;font-weight:800;letter-spacing:2px;color:var(--gold);margin-bottom:20px}
+.ending .story{font-size:14px;line-height:1.8;color:#d8ccf5;text-align:left;background:var(--panel2);border:1px solid var(--line);border-radius:16px;padding:18px;margin-bottom:20px}
+.ending .fstats{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px}
+.ending .fstat{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px}
+.ending .fstat .fk{font-size:10px;color:var(--dim);font-weight:700}
+.ending .fstat .fv{font-size:18px;font-weight:900;color:var(--neon);margin-top:3px}
+
+.toast{position:fixed;top:44px;left:50%;transform:translateX(-50%);z-index:80;background:#000d;border:1px solid var(--neon);
+  color:#fff;padding:10px 18px;border-radius:20px;font-size:13px;font-weight:800;opacity:0;transition:.3s;pointer-events:none;white-space:nowrap}
+.toast.on{opacity:1;top:52px}
+</style>
+</head>
+<body>
+
+<div class="ticker" id="ticker">
+  <span class="tag">HOT</span>
+  <div class="track" id="tickerTrack">加载中…</div>
+</div>
+
+<div id="app"></div>
+
+<div class="fandom-btn" id="fandomBtn" style="display:none">
+  <button onclick="openFandom()">💬</button>
+</div>
+
+<div class="modal" id="modal">
+  <div class="sheet" id="sheetContent"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ============================================================
+   顶流之路 · 爱豆模拟器
+   ============================================================ */
+
+const G = {
+  name:'', gender:'', genderLabel:'', concept:'', conceptLabel:'',
+  week:1,
+  fans:5000, buzz:10, rep:50, money:20, // 粉丝(人)/话题度/路人缘/资金(万)
+  mood:70, black:5, // 心情/黑红值
+  tier:0, // 咖位等级
+  album:0, drama:0, variety:0, // 作品数
+  antifans:0, dispatch:0, // 私生/代拍关注度
+  flags:{}, // 剧情标记
+  history:[],
+  seenEvents:[],
+  gameover:false,
+};
+
+const TIERS = ['练习生','选秀选手','新人爱豆','当红爱豆','一线顶流','神级偶像'];
+const CONCEPTS = {
+  vocal:{label:'实力唱将',desc:'唱功炸裂，路人缘高，但话题度慢热',bonus:{rep:15,buzz:-5}},
+  visual:{label:'颜值担当',desc:'门面王，话题度拉满，容易被质疑没实力',bonus:{buzz:15,rep:-8}},
+  dance:{label:'舞台王者',desc:'舞担台风稳，作品向发展',bonus:{rep:8,fans:20000}},
+  variety:{label:'综艺咖',desc:'节目效果好，圈粉快，但被说不务正业',bonus:{fans:40000,rep:-5}},
+};
+
+/* ---------- 头条池 ---------- */
+const HEADLINES = [
+  '#{name}疑似恋情曝光# 阅读量破8亿',
+  '某选秀练习生因舞台失误上热搜',
+  '娱乐圈又一对夫妻宣布离婚',
+  '#顶流{name}新歌打歌# 榜一有变',
+  '资本寒冬：三家经纪公司倒闭',
+  'AI换脸绯闻满天飞，粉丝集体报警',
+  '某代言品牌翻车，代言人紧急解约',
+  '选秀节目再爆黑幕，观众要求退钱',
+  '#{name}超话签到破纪录#',
+  '代拍私生猖獗，机场安保升级',
+  '某综艺剪辑引众怒，节目组道歉',
+  '偶像塌房产业链曝光，一夜脱粉百万',
+];
+
+/* ---------- 主流程状态机 ---------- */
+let currentEvent = null;
+
+/* ==================== 初始化 ==================== */
+function init(){
+  renderIntro();
+  startTicker();
+}
+
+function startTicker(){
+  const track = document.getElementById('tickerTrack');
+  function refresh(){
+    const h = HEADLINES[Math.floor(Math.random()*HEADLINES.length)]
+      .replace(/{name}/g, G.name||'新星');
+    track.textContent = '  ★  '+h+'  ★  娱乐头条实时播报  ★  '+
+      HEADLINES[Math.floor(Math.random()*HEADLINES.length)].replace(/{name}/g,G.name||'某爱豆')+'  ';
+  }
+  refresh();
+  setInterval(refresh, 18000);
+}
+
+/* ==================== 开场创建 ==================== */
+function renderIntro(){
+  document.getElementById('app').innerHTML = `
+  <div class="intro">
+    <div class="logo">★ SUPERSTAR SIMULATOR ★</div>
+    <h1>顶流之路</h1>
+    <div class="sub">从练习生到神级偶像，或者一夜塌房糊穿地心。<br>你的每个选择，都在被亿万网友围观。</div>
+    <div class="field">
+      <label>艺名</label>
+      <input id="inName" placeholder="给自己起个响亮的名字" maxlength="8" value="">
+    </div>
+    <div class="field">
+      <label>性别 / 定位</label>
+      <div class="gender-row">
+        <div class="g" data-g="female" onclick="pickGender(this,'female','小姐姐')">女爱豆</div>
+        <div class="g" data-g="male" onclick="pickGender(this,'male','小哥哥')">男爱豆</div>
+        <div class="g" data-g="neutral" onclick="pickGender(this,'neutral','爱豆')">中性/自定</div>
+      </div>
+    </div>
+    <div class="field">
+      <label>出道人设</label>
+      <div class="concept-grid">
+        ${Object.entries(CONCEPTS).map(([k,v])=>`
+          <div class="concept" data-c="${k}" onclick="pickConcept(this,'${k}','${v.label}')">
+            <div class="cn">${v.label}</div>
+            <div class="cd">${v.desc}</div>
+          </div>`).join('')}
+      </div>
+    </div>
+    <button class="start-btn" onclick="startGame()">✦ 签约出道 ✦</button>
+  </div>`;
+}
+
+function pickGender(el,g,lbl){
+  document.querySelectorAll('.gender-row .g').forEach(x=>x.classList.remove('sel'));
+  el.classList.add('sel'); G.gender=g; G.genderLabel=lbl;
+}
+function pickConcept(el,c,lbl){
+  document.querySelectorAll('.concept').forEach(x=>x.classList.remove('sel'));
+  el.classList.add('sel'); G.concept=c; G.conceptLabel=lbl;
+}
+
+function startGame(){
+  const nm = document.getElementById('inName').value.trim();
+  if(!nm){ toast('先起个艺名嘛！'); return; }
+  if(!G.gender){ toast('选个性别定位~'); return; }
+  if(!G.concept){ toast('选个出道人设~'); return; }
+  G.name = nm;
+  const b = CONCEPTS[G.concept].bonus;
+  for(const k in b){ G[k]+=b[k]; }
+  document.getElementById('fandomBtn').style.display='block';
+  toast('🎉 '+G.name+' 正式出道！');
+  renderMain();
+}
+
+/* ==================== 主界面 ==================== */
+function renderMain(){
+  if(G.gameover) return;
+  const avatarEmoji = G.gender==='female'?'👩‍🎤':G.gender==='male'?'🧑‍🎤':'🎤';
+  const app = document.getElementById('app');
+  app.innerHTML = `
+  <div class="hud">
+    <div class="name-row">
+      <div class="avatar">${avatarEmoji}</div>
+      <div class="who">
+        <h1>${G.name}</h1>
+        <div class="tier">${TIERS[G.tier]} <b>· ${G.conceptLabel} · ${G.genderLabel}</b></div>
+      </div>
+    </div>
+  </div>
+  <div class="stats">
+    <div class="stat fans"><div class="k">粉丝</div><div class="v">${fmtFans(G.fans)}</div></div>
+    <div class="stat buzz"><div class="k">话题度</div><div class="v">${G.buzz}</div></div>
+    <div class="stat rep"><div class="k">路人缘</div><div class="v">${G.rep}</div></div>
+    <div class="stat money"><div class="k">资金</div><div class="v">${G.money}万</div></div>
+  </div>
+  <div class="bars">
+    <div class="bar-line"><span class="lbl">心情</span><div class="bar-out"><div class="bar-in mood" style="width:${clamp(G.mood)}%"></div></div><span class="num">${G.mood}</span></div>
+    <div class="bar-line"><span class="lbl">黑红值</span><div class="bar-out"><div class="bar-in black" style="width:${clamp(G.black)}%"></div></div><span class="num">${G.black}</span></div>
+  </div>
+  <div class="stage" id="stage">
+    <div class="week-pill">📅 出道第 ${G.week} 周</div>
+    <div id="content"></div>
+  </div>`;
+  showActions();
+}
+
+/* ==================== 行动菜单 ==================== */
+function showActions(){
+  const c = document.getElementById('content');
+  const acts = getAvailableActions();
+  c.innerHTML = `
+    <div class="actions-title">本周安排 · 选一项</div>
+    <div class="act-grid">
+      ${acts.map((a,i)=>`
+        <div class="act ${a.disabled?'disabled':''}" onclick="doAction(${i})">
+          ${a.cost?`<div class="cost">${a.cost}</div>`:''}
+          <div class="ico">${a.ico}</div>
+          <div class="an">${a.name}</div>
+          <div class="ad">${a.desc}</div>
+        </div>`).join('')}
+    </div>`;
+  window._acts = acts;
+}
+
+function getAvailableActions(){
+  const list = [];
+  list.push({ico:'🎵',name:'录制打歌',desc:'发新歌冲榜，涨话题度和粉丝',key:'sing'});
+  list.push({ico:'📱',name:'直播营业',desc:'和粉丝互动，稳固粉丝盘',key:'live'});
+  list.push({ico:'📺',name:'上综艺',desc:'节目效果好圈路人，但耗心情',key:'variety'});
+  list.push({ico:'💼',name:'接商务',desc:'代言赚钱，可能翻车',key:'biz',cost:'+钱'});
+  if(G.tier>=2) list.push({ico:'🎬',name:'拍戏转型',desc:'影视资源，赌一把演技',key:'drama'});
+  list.push({ico:'💤',name:'休整放空',desc:'恢复心情，但一周没产出',key:'rest'});
+  list.push({ico:'🎲',name:'随缘一周',desc:'佛系营业，看命运安排',key:'random'});
+  return list;
+}
+
+function doAction(i){
+  const a = window._acts[i];
+  const ev = resolveAction(a.key);
+  currentEvent = ev;
+  renderEvent(ev);
+}
+
+/* ==================== 行动 → 事件解析 ==================== */
+function resolveAction(key){
+  // 大部分行动有 65% 概率触发随机事件，否则直接结算
+  const pool = EVENTS.filter(e=>{
+    if(G.seenEvents.includes(e.id) && !e.repeat) return false;
+    if(e.cond && !e.cond()) return false;
+    if(e.trigger && !e.trigger.includes(key)) return false;
+    return true;
+  });
+  if(pool.length && Math.random()<0.68){
+    const ev = pick(pool);
+    return ev;
+  }
+  return BASE_ACTIONS[key] || BASE_ACTIONS.random;
+}
+
+/* ==================== 基础行动结算 ==================== */
+const BASE_ACTIONS = {
+  sing:{ tag:'hot', tagLabel:'打歌舞台', title:'新歌上线，打歌舞台开始',
+    desc:()=>`${G.name}憋了一周终于放新歌。粉丝控评打投，路人半信半疑地点开了播放键……`,
+    choices:[
+      {t:'砸钱冲榜，必须榜一',cs:'花5万，话题度暴涨',eff:{money:-5,buzz:12,fans:30000},r:'打投组连夜爆肝，你空降榜一！热搜挂了三小时。'},
+      {t:'佛系发歌，随缘',cs:'省钱，但数据平平',eff:{buzz:4,fans:12000,mood:5},r:'歌是好歌，就是没水花。粉丝：我们自己听。'},
+      {t:'搞个整活MV博眼球',cs:'赌话题，可能翻车',eff:{buzz:9,rep:-3,black:4},r:'MV太抽象上了热搜，一半人夸创意一半人说看不懂。'},
+    ]},
+  live:{ tag:'fan', tagLabel:'直播营业', title:'深夜直播间开播',
+    desc:()=>`${G.name}打开直播，弹幕瞬间刷屏"哥哥/姐姐好美"。粉丝在线许愿。`,
+    choices:[
+      {t:'宠粉发福利抽奖',cs:'花3万，粉丝爆增',eff:{money:-3,fans:25000,mood:8},r:'抽奖抽出真情实感，粉丝哭着刷"这辈子跟定了"。'},
+      {t:'认真聊天走心',cs:'稳固粉丝，心情好',eff:{fans:10000,mood:12,rep:3},r:'一场2小时的深夜谈心，老粉黏性拉满。'},
+      {t:'不小心口误说错话',cs:'意外，看运气',eff:{buzz:6,black:5,rep:-4},r:'一句话被剪成小视频疯传，还好粉丝及时控评。'},
+    ]},
+  variety:{ tag:'life', tagLabel:'综艺录制', title:'常驻综艺录制现场',
+    desc:()=>`节目组给${G.name}安排了一堆整活环节，笑点全靠临场发挥。`,
+    choices:[
+      {t:'放飞自我搞节目效果',cs:'圈路人，掉形象',eff:{fans:20000,rep:8,mood:-8,buzz:5},r:'贡献名场面GIF全网疯传，"这人有点东西"。'},
+      {t:'端着人设保持精致',cs:'稳,但没记忆点',eff:{fans:6000,rep:2},r:'全程营业微笑，节目播出后没什么水花。'},
+      {t:'和前辈互动求关照',cs:'资源+心情',eff:{rep:5,mood:6,fans:8000},r:'前辈很照顾你，镜头给得足，弹幕夸你情商高。'},
+    ]},
+  biz:{ tag:'biz', tagLabel:'商务代言', title:'品牌方甩来一份代言合同',
+    desc:()=>`一个新消费品牌看中了${G.name}，报价不低。但这牌子……好像有点野。`,
+    choices:[
+      {t:'签！先赚钱再说',cs:'+12万,有风险',eff:{money:12,buzz:5,black:3},r:'代言费到账，但品牌质量一言难尽，先捂着别出事就行。'},
+      {t:'只接大牌，拒了这个',cs:'保形象,不赚钱',eff:{rep:6,mood:-3},r:'团队夸你眼光好，粉丝：格调这块拿捏了。'},
+      {t:'谈分成+要求换代言物料',cs:'专业操作',eff:{money:7,rep:4},r:'一顿商业谈判，钱和口碑都要了点，双赢。'},
+    ]},
+  drama:{ tag:'hot', tagLabel:'影视转型', title:'一个男/女三号的角色找上门',
+    desc:()=>`${G.name}想转型演员，但流量演技一直被骂。这次机会赌不赌？`,
+    choices:[
+      {t:'苦练演技，认真拍',cs:'赌口碑',eff:{rep:12,mood:-10,money:-2,drama:1},r:'杀青后一段哭戏出圈，"没想到TA还挺能演"。'},
+      {t:'带资进组当女/男主',cs:'花8万上位',eff:{money:-8,buzz:10,black:6,drama:1},r:'番位争议上热搜，演技被群嘲，但确实火了。'},
+      {t:'算了，还是回去当爱豆',cs:'放弃机会',eff:{mood:4},r:'你摸了摸兜里的话筒，决定还是唱跳最安全。'},
+    ]},
+  rest:{ tag:'life', tagLabel:'休整', title:'难得的空档期',
+    desc:()=>`连轴转太久，${G.name}决定给自己放个假。`,
+    choices:[
+      {t:'彻底断网睡三天',cs:'心情大回血',eff:{mood:20,buzz:-4},r:'睡到自然醒的感觉真好，就是热度掉了点。'},
+      {t:'偷偷去旅游被拍',cs:'意外曝光',eff:{mood:10,buzz:6,black:2},r:'素颜照被代拍偷拍上热搜，"生图也太顶了吧"。'},
+      {t:'健身塑形准备回归',cs:'稳,略掉心情',eff:{mood:6,rep:4},r:'练出腹肌/马甲线，回归舞台准备就绪。'},
+    ]},
+  random:{ tag:'life', tagLabel:'佛系营业', title:'平平无奇的一周',
+    desc:()=>`${G.name}没什么大动作，就日常营业发发超话。`,
+    choices:[
+      {t:'随手发条自拍',cs:'小涨粉',eff:{fans:8000,mood:3},r:'一条营业自拍,评论区粉丝哐哐夸。'},
+      {t:'转发个公益活动',cs:'立人设',eff:{rep:5,fans:5000},r:'低调做公益,路人好感度+1。'},
+      {t:'啥也不干摆烂',cs:'掉热度',eff:{buzz:-3,mood:5},r:'消失一周,粉丝在超话喊"哥哥/姐姐还活着吗"。'},
+    ]},
+};
+
+/* ==================== 随机事件库 ==================== */
+const EVENTS = [
+  {id:'ship',tag:'hot',tagLabel:'绯闻爆料',trigger:['sing','live','variety','random'],
+   title:'狗仔爆料：疑似与某人恋情曝光',
+   desc:()=>`一家营销号放出九宫格：<span class="hl">${G.name}</span>深夜和一个身影同框。CP粉狂欢，唯粉破防，词条一小时冲上热搜第一。`,
+   choices:[
+     {t:'工作室火速否认："普通朋友"',cs:'稳,黑红值降',eff:{black:-3,buzz:8,fans:-5000},r:'官方声明及时,大部分粉丝选择相信,但有人已经开始脱粉。'},
+     {t:'不回应,让它发酵',cs:'热度暴涨,有风险',eff:{buzz:18,black:8,rep:-5},r:'话题挂了一整天,你既没澄清也没承认,吃瓜群众越猜越嗨。'},
+     {t:'直接官宣恋情',cs:'豪赌,唯粉暴走',eff:{fans:-40000,buzz:25,rep:10,black:5},r:'"谢谢大家关心,我在恋爱"——脱粉三十万,但路人缘意外up,"真性情"。'},
+   ]},
+  {id:'darkmaterial',tag:'crisis',tagLabel:'黑料危机',trigger:['sing','live','biz','variety','random'],
+   title:'⚠️ 有人放出你的"黑历史"聊天记录',
+   desc:()=>`一个匿名账号甩出几张<span class="hl">疑似${G.name}</span>早年的聊天截图,内容不太体面。是真是假粉丝吵翻了,公关电话被打爆。`,
+   choices:[
+     {t:'发律师函,咬定是P图造谣',cs:'强硬,赌真假',eff:{black:6,rep:-4,buzz:12,money:-3},r:'律师函警告!部分是P的,但真假掺半,舆论暂时压住了。'},
+     {t:'真诚道歉,承认年少无知',cs:'掉粉但止损',eff:{fans:-20000,rep:5,black:-4,mood:-8},r:'一篇小作文道歉,骂声减半,"至少态度诚恳",老粉留了下来。'},
+     {t:'装死,让通稿盖过去',cs:'花6万压热搜',eff:{money:-6,black:-2,buzz:-5},r:'花钱撤了热搜换了新话题,这波险险糊弄过去,但危险还在。'},
+   ]},
+  {id:'dispatch',tag:'crisis',tagLabel:'私生代拍',trigger:['live','rest','variety','random'],
+   title:'私生饭跟踪到你家楼下',
+   desc:()=>`几个私生饭蹲守${G.name}的酒店和行程,甚至买通航班信息。粉丝群里在骂,你的安全感为零。`,
+   choices:[
+     {t:'公开发文谴责+报警',cs:'圈路人,费心情',eff:{rep:8,mood:-6,fans:10000,antifans:200},r:'"请给我最基本的尊重"发文获百万转发,路人心疼,私生收敛了。'},
+     {t:'忍气吞声,当没看见',cs:'憋屈,掉心情',eff:{mood:-14,black:2},r:'为了不惹事你选择沉默,但被私生变本加厉,身心俱疲。'},
+     {t:'反手拍下私生挂网上',cs:'解气,有争议',eff:{buzz:10,rep:-3,mood:5,black:4},r:'你把私生的脸挂了出来,大快人心,但也有人说你"以暴制暴"。'},
+   ]},
+  {id:'endorse_fail',tag:'biz',tagLabel:'代言翻车',cond:()=>G.tier>=1,repeat:true,trigger:['biz','random','live'],
+   title:'💥 你代言的品牌暴雷了',
+   desc:()=>`${G.name}上个月接的那个代言,品牌方被爆产品质量造假+偷税漏税,消费者集体维权,直接冲你来了。`,
+   choices:[
+     {t:'火速解约+退代言费',cs:'花钱保清白',eff:{money:-8,rep:6,black:-3},r:'第一时间切割,"某爱豆已解约"上热搜,粉丝夸你决断,损失可控。'},
+     {t:'嘴硬替品牌说话',cs:'作死操作',eff:{rep:-12,black:10,fans:-15000},r:'你替品牌辩解了两句,直接被架在火上烤,"塌房预定"。'},
+     {t:'装聋作哑等风头过',cs:'消极应对',eff:{rep:-5,black:5,mood:-6},r:'你选择沉默,但沉默被解读为"心虚",黑热度蹭蹭涨。'},
+   ]},
+  {id:'ai_face',tag:'crisis',tagLabel:'AI换脸',cond:()=>G.tier>=2,trigger:['live','random','variety'],
+   title:'🤖 有人用AI换脸做了你的不雅视频',
+   desc:()=>`一段用AI换脸伪造的<span class="hl">${G.name}</span>视频在小圈子流传,虽然是假的,但传播极快,粉丝一边辟谣一边心疼。`,
+   choices:[
+     {t:'全网追责+推动立法讨论',cs:'格局打开',eff:{rep:14,buzz:10,mood:-5,fans:20000},r:'你带头呼吁整治AI伪造,登上主流媒体,"这波站得住脚",路人缘暴涨。'},
+     {t:'低调让公司处理删帖',cs:'稳妥,但热度在',eff:{money:-4,black:2,mood:-8},r:'公司连夜删帖发函,处理得当,但你心里堵得慌。'},
+     {t:'自己下场骂战',cs:'情绪化,掉分',eff:{buzz:8,rep:-6,mood:-10,black:4},r:'你气到亲自开撕,虽然理解但显得没格局,被说"情绪不稳定"。'},
+   ]},
+  {id:'short_video',tag:'hot',tagLabel:'短视频爆火',trigger:['sing','variety','random','live'],
+   title:'🔥 你的一个片段在短视频平台爆了',
+   desc:()=>`${G.name}某个不经意的舞台/名场面被切片,配上BGM在短视频疯传,播放破亿,一夜之间路人全知道你了。`,
+   choices:[
+     {t:'趁热打铁自己下场玩梗',cs:'接住流量',eff:{fans:50000,buzz:15,rep:5},r:'你亲自拍视频还原名场面,官方玩梗最为致命,涨粉如潮。'},
+     {t:'保持神秘,不回应',cs:'高冷,浪费流量',eff:{buzz:6,fans:15000},r:'你选择不蹭这波,流量来得快去得也快,粉丝有点急。'},
+     {t:'签MCN开始做短视频号',cs:'转型,费精力',eff:{fans:35000,money:5,mood:-6,rep:-2},r:'你入驻短视频当博主,涨粉但有人说"不务正业"。'},
+   ]},
+  {id:'variety_edit',tag:'crisis',tagLabel:'恶意剪辑',trigger:['variety','random'],
+   title:'节目组把你剪成了"综艺反派"',
+   desc:()=>`最新一期综艺播出,${G.name}被剪辑成"耍大牌、没礼貌"的样子。实际上完全不是那么回事,但网友只看播出效果。`,
+   choices:[
+     {t:'放出未剪辑原片自证',cs:'实锤反转',eff:{rep:12,buzz:14,fans:20000},r:'路透原片流出,"完全是恶意剪辑",风向大反转,节目组道歉。'},
+     {t:'工作室发声明澄清',cs:'常规操作',eff:{rep:4,black:-2},r:'声明发了,信的信不信的不信,不温不火地过去了。'},
+     {t:'忍了,得罪不起节目组',cs:'憋屈,掉分',eff:{rep:-8,mood:-12,black:4},r:'为了以后的资源你选择咽下去,但"人设崩了"的标签甩不掉。'},
+   ]},
+  {id:'charity',tag:'life',tagLabel:'公益立人设',trigger:['random','rest','variety'],
+   title:'一个真实的公益项目邀请你参与',
+   desc:()=>`一个山区助学项目找到${G.name},是真做实事的那种,但也需要你真金白银和时间投入。`,
+   choices:[
+     {t:'低调捐款+实地探访',cs:'花钱,但走心',eff:{money:-6,rep:16,fans:15000,mood:8},r:'你悄悄捐了钱还去了现场,后来被曝光,"做好事不留名",口碑封神。'},
+     {t:'高调宣传拉话题',cs:'流量+争议',eff:{buzz:10,rep:3,black:3},r:'你带话题做公益,有人夸有人质疑"作秀",褒贬不一。'},
+     {t:'婉拒,怕被说作秀',cs:'保守',eff:{mood:-3},r:'你怕惹争议拒绝了,后来有点后悔错过了真心想做的事。'},
+   ]},
+  {id:'senior_diss',tag:'hot',tagLabel:'前辈内涵',cond:()=>G.tier>=2,trigger:['variety','sing','random'],
+   title:'一位过气前辈公开内涵你"德不配位"',
+   desc:()=>`某位资历老但近年糊了的艺人,在采访里阴阳怪气:"现在的流量啊,有几个是靠实力?"矛头明显指向当红的${G.name}。`,
+   choices:[
+     {t:'用作品回应,直接放新舞台',cs:'实力打脸',eff:{rep:14,buzz:12,fans:25000,mood:5},r:'你没回嘴,直接甩了个封神舞台,"这就是实力",前辈被反噬。'},
+     {t:'高情商采访回应"感谢指教"',cs:'滴水不漏',eff:{rep:8,buzz:6},r:'"前辈说得对,我会继续努力"——教科书级公关,路人夸情商。'},
+     {t:'粉丝出征前辈超话开撕',cs:'饭圈大战',eff:{buzz:15,rep:-8,black:8},r:'两家粉丝对轰上热搜,你被批"管不好粉丝",黑红一片。'},
+   ]},
+  {id:'lipsync',tag:'crisis',tagLabel:'实力质疑',cond:()=>G.concept==='visual'||G.concept==='variety',trigger:['sing','variety'],
+   title:'现场被扒"假唱+划水"',
+   desc:()=>`一场晚会直播,${G.name}的现场被眼尖网友发现疑似对口型,收音穿帮,"实力不行"的质疑铺天盖地。`,
+   choices:[
+     {t:'加练!下次直播清唱证明',cs:'豁出去了',eff:{rep:15,mood:-12,buzz:10,fans:15000},r:'你憋了一口气,下场直播清唱炸场,"真唱了!打脸黑子",逆袭。'},
+     {t:'解释"耳返出问题"',cs:'甩锅,半信半疑',eff:{rep:-4,black:3},r:'官方说是设备问题,信的人一半,"甩锅式公关"被吐槽。'},
+     {t:'摆烂,反正颜值能打',cs:'放弃治疗',eff:{rep:-10,fans:-10000,black:5},r:'你摆烂了,"花瓶"标签越贴越牢,老粉失望。'},
+   ]},
+  {id:'fan_war',tag:'fan',tagLabel:'粉丝内战',cond:()=>G.fans>3000,trigger:['live','random','sing'],
+   title:'你的粉丝群内讧了',
+   desc:()=>`${G.name}的粉丝分成了"唯粉""事业粉""毒唯"几派,因为应援方向吵翻天,后援会集体辞职,数据组罢工。`,
+   choices:[
+     {t:'亲自下场安抚:"都是家人"',cs:'走心,费心情',eff:{fans:10000,mood:-6,rep:3},r:'你发长文哄粉丝,"哥哥/姐姐都看到了",内战平息,凝聚力回来了。'},
+     {t:'装作不知道,让他们自己解决',cs:'放任',eff:{fans:-25000,buzz:-4},r:'你没管,粉丝越吵越凶,一批人愤而脱粉,数据肉眼可见下滑。'},
+     {t:'官方后援会重组洗牌',cs:'强硬整顿',eff:{fans:-10000,rep:2,mood:-4},r:'你让公司介入重组后援会,短期掉粉,但长期更规范了。'},
+   ]},
+  {id:'award',tag:'hot',tagLabel:'颁奖典礼',cond:()=>G.tier>=3,repeat:true,trigger:['sing','variety','random'],
+   title:'🏆 你入围了年度人气大奖',
+   desc:()=>`年度盛典,${G.name}入围了最具人气奖,但竞争对手粉丝也在疯狂打投,票数咬得很死。`,
+   choices:[
+     {t:'号召粉丝全力打投',cs:'花钱冲票',eff:{money:-10,fans:20000,buzz:15,mood:6},r:'粉丝爆肝投票,你惊险拿奖!舞台上你哭了,这是实至名归。'},
+     {t:'佛系,重在参与',cs:'随缘',eff:{buzz:5,rep:4},r:'你没催票,最终陪跑,但"淡泊名利"的态度圈了波路人。'},
+     {t:'暗示对家买票黑一波',cs:'下作,危险',eff:{buzz:8,rep:-10,black:12},r:'你的粉丝造谣对家买票,结果被反手实锤打脸,颜面扫地。'},
+   ]},
+  {id:'burnout',tag:'life',tagLabel:'身心告急',cond:()=>true,repeat:true,trigger:['sing','live','variety','biz','drama'],
+   title:'你在后台累到崩溃了',
+   desc:()=>`连续高强度工作,${G.name}在后台突然眼前一黑,身体和精神都到了极限。团队问你要不要停一停。`,
+   choices:[
+     {t:'停工休养,健康第一',cs:'掉热度,回血',eff:{mood:22,buzz:-8,fans:-5000},r:'你按下暂停键,粉丝刷屏"照顾好自己",热度掉了但人回来了。'},
+     {t:'硬撑,不能辜负粉丝',cs:'危险,继续掉血',eff:{mood:-15,fans:10000,buzz:5},r:'你打了一针继续上台,粉丝心疼又骄傲,但你的身体在报警。'},
+     {t:'公开呼吁行业关注艺人健康',cs:'格局,圈路人',eff:{rep:12,buzz:8,mood:-3},r:'你发声引发共鸣,"这个行业该改改了",获得大量路人尊重。'},
+   ]},
+  {id:'oldfriend',tag:'life',tagLabel:'旧友重逢',trigger:['rest','random'],
+   title:'练习生时期的老搭档来找你',
+   desc:()=>`当年一起吃苦的练习生朋友,现在还没出道,私下找到已经成名的${G.name},想请你帮忙引荐资源。`,
+   choices:[
+     {t:'尽力帮TA引荐',cs:'重情义,费人情',eff:{money:-3,mood:8,rep:5},r:'你动用人脉帮了老友,TA感激涕零,你也觉得没忘本很踏实。'},
+     {t:'委婉拒绝,划清界限',cs:'理智但凉薄',eff:{mood:-6,rep:-2},r:'你怕被连累拒绝了,老友默默走了,你心里不是滋味。'},
+     {t:'合作出个双人舞台',cs:'共赢+话题',eff:{buzz:10,fans:15000,mood:6},r:'你俩合体舞台意外出圈,"神仙友情",双赢。'},
+   ]},
+];
+
+/* ==================== 事件渲染 ==================== */
+function renderEvent(ev){
+  const c = document.getElementById('content');
+  const desc = typeof ev.desc==='function'?ev.desc():ev.desc;
+  c.innerHTML = `
+    <div class="card">
+      <span class="etag ${ev.tag}">${ev.tagLabel}</span>
+      <h2>${ev.title}</h2>
+      <div class="desc">${desc}</div>
+      <div class="choices">
+        ${ev.choices.map((ch,i)=>`
+          <button class="choice" onclick="chooseOption(${i})">
+            ${ch.t}
+            <span class="cs">${ch.cs||''}</span>
+          </button>`).join('')}
+      </div>
+    </div>`;
+  document.getElementById('stage').scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+function chooseOption(i){
+  const ev = currentEvent;
+  const ch = ev.choices[i];
+  if(ev.id) G.seenEvents.push(ev.id);
+  const before = snapshot();
+  applyEffects(ch.eff);
+  const deltas = calcDeltas(before);
+  renderResult(ch, deltas);
+}
+
+function renderResult(ch, deltas){
+  const c = document.getElementById('content');
+  const chips = deltas.map(d=>`<span class="chip ${d.up?'up':'down'}">${d.label} ${d.up?'+':''}${d.val}</span>`).join('');
+  c.innerHTML = `
+    <div class="result">
+      <div class="rtitle">📢 结果</div>
+      <div class="deltas">${chips||'<span class="chip up">风平浪静</span>'}</div>
+      <div class="rdesc">${ch.r}</div>
+    </div>
+    <button class="next-btn" onclick="nextWeek()">进入下一周 →</button>`;
+  updateHUD();
+}
+
+/* ==================== 数值处理 ==================== */
+function applyEffects(eff){
+  if(!eff) return;
+  for(const k in eff){ G[k] = (G[k]||0) + eff[k]; }
+  G.fans = Math.max(0, G.fans);
+  G.mood = clamp(G.mood); G.black = clamp(G.black);
+  G.buzz = Math.max(0,G.buzz); G.rep = clamp(G.rep,0,100); G.money = Math.max(-35,G.money);
+}
+function snapshot(){ return {fans:G.fans,buzz:G.buzz,rep:G.rep,money:G.money,mood:G.mood,black:G.black}; }
+function calcDeltas(before){
+  const map = {fans:'粉丝',buzz:'话题',rep:'路人缘',money:'资金',mood:'心情',black:'黑红'};
+  const out = [];
+  for(const k in map){
+    const d = G[k]-before[k];
+    if(d!==0){
+      let val = d, label = map[k];
+      if(k==='fans') val = (d>0?'+':'')+fmtFans(Math.abs(d)) , val=(d>0?'':'-')+fmtFans(Math.abs(d));
+      out.push({label, val:k==='fans'?(d>0?fmtFans(d):'-'+fmtFans(Math.abs(d))):(d>0?'+'+d:d), up:d>0, k});
+    }
+  }
+  // fans 特殊格式修正
+  return out.map(o=>{
+    if(o.k==='fans'){ return {label:'粉丝', val:'', up:o.up, custom:(o.up?'+':'-')+fmtFans(Math.abs(G.fans-before.fans))}; }
+    return o;
+  }).map(o=> o.custom?{label:o.label,val:o.custom,up:o.up}:o);
+}
+
+function updateHUD(){
+  const q=(s)=>document.querySelector(s);
+  const s = document.querySelectorAll('.stat .v');
+  if(s[0]) s[0].textContent=fmtFans(G.fans);
+  if(s[1]) s[1].textContent=G.buzz;
+  if(s[2]) s[2].textContent=G.rep;
+  if(s[3]) s[3].textContent=G.money+'万';
+  const bars = document.querySelectorAll('.bar-in');
+  const nums = document.querySelectorAll('.bar-line .num');
+  if(bars[0]){bars[0].style.width=clamp(G.mood)+'%'; nums[0].textContent=G.mood;}
+  if(bars[1]){bars[1].style.width=clamp(G.black)+'%'; nums[1].textContent=G.black;}
+}
+
+/* ==================== 周推进 & 升咖 ==================== */
+function nextWeek(){
+  G.week++;
+  // 每周自然变化
+  G.buzz = Math.max(0, G.buzz-3);        // 话题度自然冷却
+  G.black = Math.max(0, G.black-1);      // 黑红值缓慢消退
+  G.money -= 1;                          // 团队运营开销
+  G.mood = Math.max(0, G.mood-2);        // 疲惫累积
+  // 咖位越高维护成本越高,但也带来被动涨粉
+  if(G.tier>=3) G.money -= 1;
+  if(G.rep>=60 && G.black<30) G.fans += Math.floor(G.fans*0.02); // 高口碑滚雪球
+  checkTierUp();
+  const end = checkEnding();
+  if(end){ renderEnding(end); return; }
+  renderMain();
+}
+
+function checkTierUp(){
+  const thresholds = [ // 升级所需粉丝(人)
+    {fans:50000,tier:1}, {fans:300000,tier:2}, {fans:1500000,tier:3},
+    {fans:6000000,tier:4}, {fans:20000000,tier:5},
+  ];
+  for(const t of thresholds){
+    if(G.fans>=t.fans && G.tier<t.tier){
+      G.tier = t.tier;
+      toast('🎊 咖位提升 → '+TIERS[G.tier]+'！');
+    }
+  }
+}
+
+/* ==================== 结局判定 ==================== */
+function checkEnding(){
+  // 塌房 / 糊掉
+  if(G.black>=100){ return ENDINGS.collapse; }
+  if(G.mood<=0){ return ENDINGS.breakdown; }
+  if(G.fans<=0 && G.week>4){ return ENDINGS.flop; }
+  if(G.money<=-30){ return ENDINGS.broke; }
+  // 神级封神(极难:顶级咖位+高路人缘+高话题)
+  if(G.tier>=5 && G.rep>=72 && G.black<40){ return ENDINGS.legend; }
+  // 30周长线结局
+  if(G.week>30){
+    if(G.black>=55) return ENDINGS.blackred;
+    if(G.tier>=4) return ENDINGS.toplux;
+    if(G.rep>=75) return ENDINGS.artist;
+    return ENDINGS.steady;
+  }
+  return null;
+}
+
+const ENDINGS = {
+  legend:{em:'👑',t:'神级偶像 · 封神',tag:'THE LEGEND',
+    story:s=>`第 ${s.week} 周,${s.name} 站在了华语乐坛的顶峰。<br><br>从练习生到神级偶像,你用作品和口碑证明了一切。演唱会门票秒空,街上循环着你的歌,连质疑过你的人都成了粉丝。<br><br>你没有塌房,没有翻车,你只是——赢麻了。这就是顶流该有的样子。`},
+  toplux:{em:'🌟',t:'一线顶流 · 圆满',tag:'A-LISTER',
+    story:s=>`30周的爱豆生涯落幕,${s.name} 稳坐一线顶流。<br><br>虽然一路上有绯闻有黑料,但你都稳稳接住了。粉丝忠诚,资源不断,资本捧着你。你活成了这个行业里最体面的样子。`},
+  artist:{em:'🎭',t:'德艺双馨 · 转型成功',tag:'THE ARTIST',
+    story:s=>`${s.name} 从流量偶像,成功转型成了被认可的艺人。<br><br>路人缘拉满,业内尊重,你不再靠数据说话,而是靠作品。你证明了:偶像也可以是有实力、有格局的存在。`},
+  blackred:{em:'🔥',t:'黑红也是红',tag:'INFAMOUS',
+    story:s=>`30周下来,${s.name} 成了话题制造机。<br><br>骂你的比爱你的多,但流量是实打实的。你游走在塌房边缘却始终没死,靠着一次次热搜活成了娱乐圈的"顶流刺客"。黑红,也是红。`},
+  steady:{em:'😌',t:'安稳出道 · 细水长流',tag:'STEADY',
+    story:s=>`${s.name} 没能大红大紫,但也稳稳地留在了这个圈子里。<br><br>有一批忠实的粉丝,接得到活,过得去。不是所有人都能当顶流,能长长久久地做喜欢的事,也挺好。`},
+  collapse:{em:'💀',t:'塌房 · 一夜糊穿地心',tag:'CANCELED',
+    story:s=>`黑红值爆表,${s.name} 塌房了。<br><br>热搜挂了三天,粉丝集体脱粉回踩,代言全解约,通告全取消。前一天还是顶流,第二天就查无此人。<br><br>娱乐圈的规则很残酷:捧你的时候有多高,摔下来就有多惨。`},
+  breakdown:{em:'🥀',t:'心力交瘁 · 退圈',tag:'BURNOUT',
+    story:s=>`第 ${s.week} 周,${s.name} 的心情值归零。<br><br>你在某个深夜发了一条"我累了"就关闭了所有社交账号。这个行业消耗人的速度太快,你选择离开,去过普通人的生活。<br><br>粉丝哭着送别,但没人怪你。有些顶流,输给的不是对手,是自己的身心。`},
+  flop:{em:'📉',t:'糊了 · 查无此人',tag:'FORGOTTEN',
+    story:s=>`粉丝走光了,${s.name} 彻底糊了。<br><br>超话冷清,新歌无人问津,公司也不再投资源。你成了那个"出道即巅峰"的反面案例。<br><br>娱乐圈从不缺新人,缺的是被记住的理由。`},
+  broke:{em:'💸',t:'资金链断裂 · 被公司解约',tag:'BANKRUPT',
+    story:s=>`钱烧光了,${s.name} 被公司解约了。<br><br>打投、公关、买热搜……钱像流水一样花出去,却没换来对等的回报。资本是逐利的,当你不再赚钱,他们头也不回。`},
+};
+
+function renderEnding(end){
+  G.gameover = true;
+  document.getElementById('fandomBtn').style.display='none';
+  const app = document.getElementById('app');
+  app.innerHTML = `
+  <div class="ending">
+    <div class="em">${end.em}</div>
+    <h1>${end.t}</h1>
+    <div class="etag2">— ${end.tag} —</div>
+    <div class="story">${end.story(G)}</div>
+    <div class="fstats">
+      <div class="fstat"><div class="fk">最终粉丝</div><div class="fv">${fmtFans(G.fans)}</div></div>
+      <div class="fstat"><div class="fk">咖位</div><div class="fv">${TIERS[G.tier]}</div></div>
+      <div class="fstat"><div class="fk">存活周数</div><div class="fv">${G.week}周</div></div>
+      <div class="fstat"><div class="fk">黑红值</div><div class="fv">${G.black}</div></div>
+    </div>
+    <button class="start-btn" onclick="location.reload()">✦ 再战一次 ✦</button>
+  </div>`;
+  window.scrollTo(0,0);
+}
+
+/* ==================== 超话弹窗 ==================== */
+const WEIBO_POOL = {
+  high:[ // 粉丝多时
+    {u:'{name}全球后援会',v:true,t:'哥哥/姐姐今天也好优秀！数据组冲鸭！🔥',l:'12.3万',c:'2.1万'},
+    {u:'追{name}的第365天',v:false,t:'这颜这实力,不红天理难容!爱了爱了',l:'8.9万',c:'6千'},
+    {u:'路人观望中',v:false,t:'本来只是路过,结果被圈粉了...真香',l:'5.2万',c:'3千'},
+  ],
+  mid:[
+    {u:'{name}数据站',v:true,t:'姐妹们打榜了!今天目标榜前三!',l:'2.1万',c:'8百'},
+    {u:'吃瓜群众',v:false,t:'这人最近有点东西啊,开始关注了',l:'1.3万',c:'5百'},
+    {u:'老粉一枚',v:false,t:'从练习生看到现在,越来越好了呜呜',l:'9千',c:'4百'},
+  ],
+  low:[
+    {u:'{name}唯一后援会',v:false,t:'哥哥/姐姐还在营业吗...有点担心😢',l:'320',c:'88'},
+    {u:'不离不弃的粉',v:false,t:'不管红不红我都在,永远支持你!',l:'256',c:'62'},
+    {u:'黑粉路过',v:false,t:'这不是那个糊咖吗,还没退圈呢?',l:'1.2万',c:'900'},
+  ],
+  black:[
+    {u:'吃瓜第一线',v:true,t:'#{name}塌房# 蹲一个后续,瓜太大了',l:'23万',c:'5万'},
+    {u:'脱粉回踩ing',v:false,t:'曾经多爱现在多恨,当初真是瞎了眼',l:'6万',c:'2万'},
+    {u:'理性粉',v:false,t:'先别急着定论,等官方回应...(在线祈祷)',l:'3万',c:'1万'},
+  ],
+};
+function openFandom(){
+  let pool;
+  if(G.black>=50) pool = WEIBO_POOL.black;
+  else if(G.fans>=3000000) pool = WEIBO_POOL.high;
+  else if(G.fans>=300000) pool = WEIBO_POOL.mid;
+  else pool = WEIBO_POOL.low;
+  const items = pool.map(w=>`
+    <div class="weibo">
+      <div class="u">@${w.u.replace(/{name}/g,G.name)} ${w.v?'<span class="v">✓认证大粉</span>':''}</div>
+      <div class="t">${w.t.replace(/{name}/g,G.name)}</div>
+      <div class="m"><span>🔁 ${w.l}</span><span>💬 ${w.c}</span><span>❤️ ${Math.floor(Math.random()*50+10)}万</span></div>
+    </div>`).join('');
+  document.getElementById('sheetContent').innerHTML = `
+    <h3>💬 ${G.name} 超话</h3>
+    ${items}
+    <div style="text-align:center;color:var(--dim);font-size:11px;margin-top:8px">— 实时粉丝动态 · 共 ${fmtFans(G.fans)} 位粉丝 —</div>
+    <button class="close" onclick="closeModal()">关闭</button>`;
+  document.getElementById('modal').classList.add('on');
+}
+function closeModal(){ document.getElementById('modal').classList.remove('on'); }
+document.getElementById('modal').addEventListener('click',e=>{ if(e.target.id==='modal') closeModal(); });
+
+/* ==================== 工具函数 ==================== */
+function fmtFans(n){
+  n = Math.round(Math.max(0,n));
+  if(n>=100000000) return (n/100000000).toFixed(2)+'亿';
+  if(n>=10000) return (n/10000).toFixed(n>=1000000?0:1).replace(/\.0$/,'')+'万';
+  return n.toLocaleString();
+}
+function clamp(v,min=0,max=100){ return Math.max(min,Math.min(max,v)); }
+function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+function toast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.classList.add('on');
+  clearTimeout(window._tt);
+  window._tt=setTimeout(()=>t.classList.remove('on'),2200);
+}
+
+init();
+</script>
+</body>
+</html>
