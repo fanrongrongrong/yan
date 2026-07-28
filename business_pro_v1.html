@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>💎 生意统计 Pro</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+<script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+
+<style>
+*{ margin:0; padding:0; box-sizing:border-box; font-family:"PingFang SC","Microsoft YaHei",sans-serif; }
+body{
+    background: linear-gradient(135deg,#0f172a,#1e3a8a,#312e81,#4f46e5);
+    min-height:100vh;
+    padding:20px;
+    color:white;
+    overflow-x:hidden;
+}
+body::before{
+    content:""; position:fixed; left:-30%; top:-30%;
+    width:800px; height:800px; background:#00e5ff33;
+    border-radius:50%; filter:blur(150px); animation:float1 10s infinite alternate; z-index: -1;
+}
+body::after{
+    content:""; position:fixed; right:-30%; bottom:-30%;
+    width:700px; height:700px; background:#ff00ff33;
+    border-radius:50%; filter:blur(150px); animation:float2 12s infinite alternate; z-index: -1;
+}
+@keyframes float1{ to{ transform:translate(120px,80px); } }
+@keyframes float2{ to{ transform:translate(-100px,-60px); } }
+
+.container{ max-width:1300px; margin:auto; position: relative; z-index: 1; }
+.title{ font-size:42px; font-weight:bold; text-align:center; margin-bottom:10px; }
+.subtitle{ text-align:center; opacity:.8; margin-bottom:25px; }
+.grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(250px,1fr)); gap:20px; }
+.card{
+    backdrop-filter:blur(25px); background:rgba(255,255,255,.12);
+    border:1px solid rgba(255,255,255,.15); border-radius:24px;
+    padding:22px; box-shadow:0 10px 40px rgba(0,0,0,.25); transition:.35s;
+}
+.card:hover{ transform:translateY(-8px); }
+.label{ font-size:15px; opacity:.8; }
+.value{ font-size:40px; margin-top:15px; font-weight:bold; }
+.buttonArea{ display:flex; gap:15px; flex-wrap:wrap; margin-top:30px; }
+button{
+    padding:18px 28px; font-size:18px; border:none; border-radius:18px;
+    cursor:pointer; background:linear-gradient(135deg,#00d2ff,#3a7bd5);
+    color:white; font-weight:bold; transition:.3s;
+}
+button:hover{ transform:scale(1.05); }
+input{
+    width:100%; padding:15px; margin-top:10px; border:none;
+    border-radius:15px; font-size:18px; outline: none; background: rgba(255,255,255,0.9);
+}
+.chart{
+    margin-top:30px; height:420px; border-radius:25px;
+    background:rgba(255,255,255,.12); backdrop-filter:blur(20px); padding: 20px;
+}
+.section{ margin-top:40px; }
+.table{ width:100%; border-collapse:collapse; margin-top:15px; text-align: left;}
+.table th { padding:12px; border-bottom:2px solid rgba(255,255,255,.3); opacity: 0.8; }
+.table td{ padding:12px; border-bottom:1px solid rgba(255,255,255,.15); }
+</style>
+</head>
+<body>
+
+<div class="container" id="appContainer">
+    <div class="title">💎 生意统计 Pro</div>
+    <div class="subtitle">料料（60%） · 容容（40%）</div>
+
+    <div class="grid">
+        <div class="card">
+            <div class="label">💰 总营业额</div>
+            <div class="value" id="money">0.00</div>
+        </div>
+        <div class="card">
+            <div class="label">👥 总人数</div>
+            <div class="value" id="people">0</div>
+        </div>
+        <div class="card">
+            <div class="label">📅 今日营业额</div>
+            <div class="value" id="todayMoney">0.00</div>
+        </div>
+        <div class="card">
+            <div class="label">🔥 今日人数</div>
+            <div class="value" id="todayPeople">0</div>
+        </div>
+        <div class="card">
+            <div class="label">👧 料料所得 (60%)</div>
+            <div class="value" id="liaoliao">0.00</div>
+        </div>
+        <div class="card">
+            <div class="label">🧒 容容所得 (40%)</div>
+            <div class="value" id="rongrong">0.00</div>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>快捷操作</h2>
+        <div class="buttonArea">
+            <button id="addBtn">➕ 成交一次</button>
+            <button id="undoBtn" style="background:linear-gradient(135deg,#f5af19,#f12711);">↩ 撤销</button>
+            <button id="exportExcel" style="background:linear-gradient(135deg,#11998e,#38ef7d);">📄 导出Excel</button>
+            <button id="exportImage" style="background:linear-gradient(135deg,#8E2DE2,#4A00E0);">🖼 导出图片</button>
+            <button id="dailyBtn" style="background:linear-gradient(135deg,#b20a2c,#fffbd5); color: #333;">🤖 自动日报</button>
+        </div>
+        <div style="margin-top:20px">
+            <label>每次点击增加金额：</label>
+            <input id="unitMoney" type="number" value="4" min="0.1" step="0.1">
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>📈 收入趋势</h2>
+        <div id="lineChart" class="chart"></div>
+    </div>
+
+    <div class="section">
+        <h2>📚 历史记录 (最近15条)</h2>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>时间</th>
+                    <th>操作</th>
+                    <th>金额变化</th>
+                </tr>
+            </thead>
+            <tbody id="history"></tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+/**********************
+ * 生意统计 Pro
+ * 数据核心
+ **********************/
+const STORAGE_KEY = "business_pro_v1";
+
+let data = {
+    totalMoney: 0,
+    totalPeople: 0,
+    unitMoney: 4,
+    history: [],
+    daily: {},
+    ratioA: 0.6, // 料料
+    ratioB: 0.4  // 容容
+};
+
+let undoStack = [];
+let myChart = null;
+
+// 获取今日日期字符串 YYYY-MM-DD
+function getTodayStr() {
+    const d = new Date();
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+}
+
+// 格式化时间 YYYY-MM-DD HH:mm:ss
+function getNowStr() {
+    const d = new Date();
+    return getTodayStr() + ' ' + String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0') + ':' + String(d.getSeconds()).padStart(2, '0');
+}
+
+/**********************
+ * 核心逻辑与本地存储
+ **********************/
+function loadData() {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+        try {
+            const parsed = JSON.parse(saved);
+            data = { ...data, ...parsed };
+            // 确保 daily 和 history 是对象和数组
+            if (!data.daily) data.daily = {};
+            if (!data.history) data.history = [];
+        } catch (e) {
+            console.error("解析本地数据失败", e);
+        }
+    }
+}
+
+function saveData() {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+}
+
+function addOne() {
+    // 保存当前状态到撤销栈
+    undoStack.push(JSON.stringify(data));
+    if (undoStack.length > 20) undoStack.shift(); // 限制撤销栈大小防止内存溢出
+
+    const today = getTodayStr();
+    if (!data.daily[today]) {
+        data.daily[today] = { money: 0, people: 0 };
+    }
+
+    // 更新数据
+    data.totalPeople++;
+    data.totalMoney += data.unitMoney;
+    data.daily[today].money += data.unitMoney;
+    data.daily[today].people++;
+
+    // 记录历史
+    data.history.unshift({
+        time: getNowStr(),
+        type: '成交',
+        money: data.unitMoney
+    });
+    
+    // 只保留最近 100 条记录防止过载
+    if (data.history.length > 100) {
+        data.history.pop();
+    }
+
+    saveData();
+    refresh();
+}
+
+function undo() {
+    if (undoStack.length === 0) {
+        alert("没有可撤销的操作！");
+        return;
+    }
+    const prevState = undoStack.pop();
+    data = JSON.parse(prevState);
+    saveData();
+    refresh();
+}
+
+/**********************
+ * 页面渲染
+ **********************/
+function refresh() {
+    const today = getTodayStr();
+    const todayData = data.daily[today] || { money: 0, people: 0 };
+
+    // 渲染卡片数据
+    document.getElementById("money").innerText = data.totalMoney.toFixed(2);
+    document.getElementById("people").innerText = data.totalPeople;
+    document.getElementById("todayMoney").innerText = todayData.money.toFixed(2);
+    document.getElementById("todayPeople").innerText = todayData.people;
+    document.getElementById("liaoliao").innerText = (data.totalMoney * data.ratioA).toFixed(2);
+    document.getElementById("rongrong").innerText = (data.totalMoney * data.ratioB).toFixed(2);
+
+    // 渲染历史记录表
+    const tbody = document.getElementById("history");
+    tbody.innerHTML = "";
+    data.history.slice(0, 15).forEach(item => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+            <td>${item.time}</td>
+            <td><span style="background: rgba(255,255,255,0.2); padding: 4px 8px; border-radius: 8px;">${item.type}</span></td>
+            <td style="color: #00e5ff; font-weight: bold;">+ ${item.money.toFixed(2)}</td>
+        `;
+        tbody.appendChild(tr);
+    });
+
+    renderChart();
+}
+
+/**********************
+ * 图表与导出功能
+ **********************/
+function renderChart() {
+    if (!myChart) {
+        myChart = echarts.init(document.getElementById("lineChart"));
+    }
+    
+    const dates = Object.keys(data.daily).sort();
+    const moneys = dates.map(d => data.daily[d].money);
+
+    const option = {
+        tooltip: { trigger: 'axis' },
+        xAxis: { 
+            type: 'category', 
+            data: dates,
+            axisLabel: { color: '#fff' }
+        },
+        yAxis: { 
+            type: 'value',
+            axisLabel: { color: '#fff' },
+            splitLine: { lineStyle: { color: 'rgba(255,255,255,0.1)' } }
+        },
+        series: [{
+            data: moneys,
+            type: 'line',
+            smooth: true,
+            itemStyle: { color: '#00d2ff' },
+            areaStyle: {
+                color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                    { offset: 0, color: 'rgba(0, 210, 255, 0.5)' },
+                    { offset: 1, color: 'rgba(58, 123, 213, 0.05)' }
+                ])
+            }
+        }]
+    };
+    myChart.setOption(option);
+}
+
+window.addEventListener('resize', () => {
+    if (myChart) myChart.resize();
+});
+
+/**********************
+ * 事件监听与初始化
+ **********************/
+loadData();
+document.getElementById("unitMoney").value = data.unitMoney;
+refresh();
+
+document.getElementById("addBtn").onclick = addOne;
+document.getElementById("undoBtn").onclick = undo;
+
+document.getElementById("unitMoney").onchange = function() {
+    let v = parseFloat(this.value);
+    if (isNaN(v) || v <= 0) {
+        alert("请输入正确的金额");
+        this.value = data.unitMoney;
+        return;
+    }
+    data.unitMoney = v;
+    saveData();
+};
+
+// 导出 Excel
+document.getElementById("exportExcel").onclick = function() {
+    // 每日统计数据
+    const dailyArr = Object.keys(data.daily).map(date => ({
+        "日期": date,
+        "营业额 (元)": data.daily[date].money,
+        "客流 (人)": data.daily[date].people
+    }));
+    
+    const wb = XLSX.utils.book_new();
+    const ws1 = XLSX.utils.json_to_sheet(dailyArr);
+    const ws2 = XLSX.utils.json_to_sheet(data.history);
+
+    XLSX.utils.book_append_sheet(wb, ws1, "每日统计");
+    XLSX.utils.book_append_sheet(wb, ws2, "详细流水记录");
+    XLSX.writeFile(wb, `生意统计_${getTodayStr()}.xlsx`);
+};
+
+// 导出图片
+document.getElementById("exportImage").onclick = function() {
+    const container = document.getElementById("appContainer");
+    
+    html2canvas(container, {
+        backgroundColor: '#1e3a8a', // 设置底色以防透明导致文字看不清
+        scale: 2 // 提高清晰度
+    }).then(canvas => {
+        const link = document.createElement("a");
+        link.download = `生意数据看板_${getTodayStr()}.png`;
+        link.href = canvas.toDataURL("image/png");
+        link.click();
+    });
+};
+
+// 自动日报
+document.getElementById("dailyBtn").onclick = function() {
+    const today = getTodayStr();
+    const todayData = data.daily[today] || { money: 0, people: 0 };
+    
+    const report = `📊 【生意统计 Pro 自动日报】
+📅 日期：${today}
+----------------------
+🔥 今日客流：${todayData.people} 人
+💰 今日营业额：${todayData.money.toFixed(2)} 元
+----------------------
+📈 累计客流：${data.totalPeople} 人
+💎 累计营业额：${data.totalMoney.toFixed(2)} 元
+👧 料料分红 (60%)：${(data.totalMoney * data.ratioA).toFixed(2)} 元
+🧒 容容分红 (40%)：${(data.totalMoney * data.ratioB).toFixed(2)} 元`;
+
+    alert(report);
+};
+
+</script>
+</body>
+</html>
