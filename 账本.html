@@ -1,0 +1,1267 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#1a1512">
+<title>账本 · 料料容容</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body {
+    margin: 0; padding: 0;
+    background: #1a1512;
+    color: #e8ddd0;
+    font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Helvetica Neue', sans-serif;
+    font-size: 15px;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+  body { padding-bottom: 80px; }
+  .wrap { max-width: 520px; margin: 0 auto; padding: 16px 14px 40px; }
+
+  /* 顶栏 */
+  .top {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 8px 4px 16px;
+  }
+  .top h1 {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    color: #f5e6d3;
+  }
+  .top h1 .sub {
+    font-size: 11px;
+    color: #7a6a5c;
+    font-weight: 400;
+    margin-left: 6px;
+    letter-spacing: 0;
+  }
+  .top .settings-btn {
+    background: none; border: none; color: #7a6a5c;
+    font-size: 22px; padding: 4px 8px; cursor: pointer;
+  }
+
+  /* 今日大数字卡片 */
+  .today-card {
+    background: linear-gradient(155deg, #2d2018 0%, #241a14 100%);
+    border-radius: 20px;
+    padding: 22px 20px 20px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    border: 1px solid #3a2c22;
+    margin-bottom: 14px;
+  }
+  .today-card .label {
+    font-size: 12px;
+    color: #8a7563;
+    letter-spacing: 2px;
+    margin-bottom: 8px;
+  }
+  .today-card .big-num {
+    font-size: 44px;
+    font-weight: 700;
+    color: #f5c98a;
+    letter-spacing: -1px;
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+    margin-bottom: 6px;
+  }
+  .today-card .big-num .unit { font-size: 20px; color: #8a7563; margin-left: 4px; font-weight: 400; }
+  .today-card .count-row {
+    display: flex; gap: 14px; margin-top: 12px;
+    font-size: 13px; color: #b09b85;
+  }
+  .today-card .count-row span b { color: #e8ddd0; font-size: 15px; font-weight: 600; margin-right: 2px; }
+
+  /* 分账小卡 */
+  .split-row {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+    margin-bottom: 16px;
+  }
+  .split-card {
+    background: #241a14;
+    border: 1px solid #3a2c22;
+    border-radius: 14px;
+    padding: 12px 14px;
+  }
+  .split-card .name {
+    font-size: 12px; color: #8a7563; margin-bottom: 4px;
+    display: flex; justify-content: space-between;
+  }
+  .split-card .name .pct { color: #f5c98a; font-weight: 600; }
+  .split-card .val {
+    font-size: 22px; font-weight: 600; color: #e8ddd0;
+    font-variant-numeric: tabular-nums; letter-spacing: -0.5px;
+  }
+  .split-card .val .unit { font-size: 12px; color: #7a6a5c; margin-left: 2px; font-weight: 400; }
+
+  /* 主按钮 */
+  .add-main {
+    width: 100%;
+    background: linear-gradient(155deg, #f5c98a 0%, #d4a066 100%);
+    color: #1a1512;
+    border: none;
+    border-radius: 18px;
+    padding: 22px;
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    box-shadow: 0 6px 20px rgba(245, 201, 138, 0.15);
+    cursor: pointer;
+    margin-bottom: 12px;
+    transition: transform 0.08s, box-shadow 0.2s;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+  }
+  .add-main:active {
+    transform: scale(0.97);
+    box-shadow: 0 2px 8px rgba(245, 201, 138, 0.2);
+  }
+  .add-main .arrow { font-size: 16px; opacity: 0.6; }
+  .add-main .price-hint {
+    font-size: 12px; font-weight: 400; opacity: 0.6; margin-left: 6px;
+  }
+
+  /* 自定义录入 */
+  .custom-row {
+    display: grid; grid-template-columns: 1fr 1fr auto; gap: 8px;
+    margin-bottom: 20px;
+  }
+  .custom-row input {
+    background: #241a14;
+    border: 1px solid #3a2c22;
+    border-radius: 12px;
+    color: #e8ddd0;
+    padding: 12px 14px;
+    font-size: 15px;
+    font-family: inherit;
+    -webkit-appearance: none;
+    appearance: none;
+    outline: none;
+    text-align: center;
+  }
+  .custom-row input:focus { border-color: #f5c98a; }
+  .custom-row input::placeholder { color: #6a5a4c; font-size: 13px; }
+  .custom-row .add-custom {
+    background: #3a2c22;
+    color: #f5c98a;
+    border: none;
+    border-radius: 12px;
+    padding: 0 18px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .custom-row .add-custom:active { background: #4a3a2c; }
+
+  /* Tab 切换 */
+  .tabs {
+    display: flex; background: #241a14; border-radius: 12px;
+    padding: 4px; margin-bottom: 14px; gap: 2px;
+  }
+  .tabs button {
+    flex: 1; background: none; border: none;
+    color: #7a6a5c; padding: 8px 4px;
+    font-size: 13px; font-weight: 500;
+    border-radius: 9px; cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+  }
+  .tabs button.active {
+    background: #3a2c22; color: #f5c98a;
+  }
+
+  /* Section */
+  .section { display: none; }
+  .section.active { display: block; }
+
+  /* 统计小卡片网格 */
+  .stat-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+    margin-bottom: 14px;
+  }
+  .stat-card {
+    background: #241a14;
+    border: 1px solid #3a2c22;
+    border-radius: 14px;
+    padding: 14px;
+  }
+  .stat-card .lbl { font-size: 11px; color: #7a6a5c; letter-spacing: 1px; margin-bottom: 6px; }
+  .stat-card .num {
+    font-size: 22px; font-weight: 600; color: #e8ddd0;
+    font-variant-numeric: tabular-nums;
+  }
+  .stat-card .num.warn { color: #e8938a; }
+  .stat-card .num.good { color: #a8d495; }
+  .stat-card .num .unit { font-size: 12px; color: #7a6a5c; font-weight: 400; margin-left: 2px; }
+  .stat-card .sub { font-size: 11px; color: #7a6a5c; margin-top: 4px; }
+
+  /* Chart 容器 */
+  .chart-box {
+    background: #241a14;
+    border: 1px solid #3a2c22;
+    border-radius: 14px;
+    padding: 14px 12px 12px;
+    margin-bottom: 12px;
+  }
+  .chart-box h3 {
+    margin: 0 0 10px;
+    font-size: 13px; color: #b09b85;
+    font-weight: 500; letter-spacing: 1px;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .chart-box h3 .hint { font-size: 11px; color: #6a5a4c; font-weight: 400; letter-spacing: 0; }
+  .chart-box canvas { max-height: 200px; }
+
+  /* 记录列表 */
+  .log-list {
+    background: #241a14;
+    border: 1px solid #3a2c22;
+    border-radius: 14px;
+    overflow: hidden;
+  }
+  .log-item {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 12px 14px;
+    border-bottom: 1px solid #2f2218;
+    font-size: 14px;
+  }
+  .log-item:last-child { border-bottom: none; }
+  .log-item .time { color: #7a6a5c; font-size: 12px; font-variant-numeric: tabular-nums; }
+  .log-item .mid { flex: 1; margin: 0 12px; }
+  .log-item .mid .amt { color: #f5c98a; font-weight: 600; font-size: 15px; }
+  .log-item .mid .cnt { color: #7a6a5c; font-size: 12px; margin-left: 4px; }
+  .log-item .del {
+    background: none; border: none; color: #6a5a4c;
+    font-size: 18px; padding: 4px 8px; cursor: pointer;
+  }
+  .log-item .del:active { color: #e8938a; }
+  .log-empty {
+    padding: 40px 20px; text-align: center; color: #6a5a4c; font-size: 13px;
+  }
+
+  /* 日历热力 */
+  .heatmap {
+    display: grid; grid-template-columns: repeat(7, 1fr);
+    gap: 3px;
+    padding: 8px 0;
+  }
+  .heat-cell {
+    aspect-ratio: 1;
+    border-radius: 4px;
+    background: #2a1f18;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 9px;
+    color: #6a5a4c;
+    font-variant-numeric: tabular-nums;
+  }
+  .heat-cell[data-level="1"] { background: #4a3a2a; color: #b09b85; }
+  .heat-cell[data-level="2"] { background: #7a5a3a; color: #e8ddd0; }
+  .heat-cell[data-level="3"] { background: #b0824a; color: #1a1512; font-weight: 600; }
+  .heat-cell[data-level="4"] { background: #f5c98a; color: #1a1512; font-weight: 700; }
+  .heat-cell.today { box-shadow: inset 0 0 0 1.5px #f5c98a; }
+  .heat-days {
+    display: grid; grid-template-columns: repeat(7, 1fr);
+    gap: 3px;
+    font-size: 10px; color: #6a5a4c;
+    text-align: center;
+    margin-bottom: 4px;
+  }
+
+  /* 设置弹窗 */
+  .modal-bg {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.6);
+    backdrop-filter: blur(4px);
+    display: none;
+    align-items: flex-end;
+    z-index: 100;
+  }
+  .modal-bg.show { display: flex; }
+  .modal {
+    background: #241a14;
+    width: 100%;
+    max-width: 520px;
+    margin: 0 auto;
+    border-radius: 20px 20px 0 0;
+    padding: 20px 20px 40px;
+    max-height: 85vh;
+    overflow-y: auto;
+    animation: slideUp 0.25s ease-out;
+  }
+  @keyframes slideUp {
+    from { transform: translateY(100%); }
+    to { transform: translateY(0); }
+  }
+  .modal h2 {
+    margin: 0 0 16px;
+    font-size: 17px; color: #f5c98a;
+    font-weight: 600;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .modal h2 .close {
+    background: none; border: none; color: #7a6a5c;
+    font-size: 22px; cursor: pointer;
+  }
+  .field { margin-bottom: 14px; }
+  .field label {
+    display: block; font-size: 12px; color: #8a7563;
+    letter-spacing: 1px; margin-bottom: 6px;
+  }
+  .field input, .field select {
+    width: 100%;
+    background: #1a1512;
+    border: 1px solid #3a2c22;
+    border-radius: 10px;
+    color: #e8ddd0;
+    padding: 11px 14px;
+    font-size: 15px;
+    font-family: inherit;
+    -webkit-appearance: none;
+    appearance: none;
+    outline: none;
+  }
+  .field input:focus, .field select:focus { border-color: #f5c98a; }
+  .field .split-inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .btn-row { display: flex; gap: 8px; margin-top: 18px; }
+  .btn-row button {
+    flex: 1; padding: 12px; border-radius: 10px; border: none;
+    font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit;
+  }
+  .btn-primary { background: #f5c98a; color: #1a1512; }
+  .btn-ghost { background: #3a2c22; color: #b09b85; }
+  .btn-danger { background: #3a2018; color: #e8938a; }
+
+  /* 迷你 toast */
+  .toast {
+    position: fixed;
+    top: 80px; left: 50%;
+    transform: translateX(-50%) translateY(-100px);
+    background: #f5c98a;
+    color: #1a1512;
+    padding: 10px 20px;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 600;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.4);
+    opacity: 0;
+    transition: transform 0.3s, opacity 0.3s;
+    pointer-events: none;
+    z-index: 200;
+  }
+  .toast.show {
+    transform: translateX(-50%) translateY(0);
+    opacity: 1;
+  }
+
+  /* 底部小水印 */
+  .footer-tip {
+    text-align: center;
+    color: #4a3a2c;
+    font-size: 11px;
+    margin-top: 20px;
+    letter-spacing: 1px;
+  }
+
+  /* 撤销悬浮按钮 */
+  .undo-fab {
+    position: fixed;
+    bottom: 20px; right: 20px;
+    background: #3a2c22;
+    color: #f5c98a;
+    border: 1px solid #4a3a2c;
+    border-radius: 22px;
+    padding: 10px 18px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.3);
+    z-index: 50;
+    display: none;
+    font-family: inherit;
+  }
+  .undo-fab.show { display: block; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="top">
+    <h1>账本<span class="sub">料料 · 容容</span></h1>
+    <button class="settings-btn" onclick="openSettings()">⚙</button>
+  </div>
+
+  <!-- 今日总览 -->
+  <div class="today-card">
+    <div class="label">今日流水</div>
+    <div class="big-num"><span id="todayAmt">0</span><span class="unit">元</span></div>
+    <div class="count-row">
+      <span><b id="todayCount">0</b>单</span>
+      <span>·</span>
+      <span><b id="todayAvg">0</b>元/单均</span>
+      <span>·</span>
+      <span id="todayVs" style="color:#7a6a5c;"></span>
+    </div>
+  </div>
+
+  <!-- 分账小卡 -->
+  <div class="split-row">
+    <div class="split-card">
+      <div class="name"><span id="name1">料料</span><span class="pct" id="pct1">60%</span></div>
+      <div class="val"><span id="split1">0</span><span class="unit">元</span></div>
+    </div>
+    <div class="split-card">
+      <div class="name"><span id="name2">容容</span><span class="pct" id="pct2">40%</span></div>
+      <div class="val"><span id="split2">0</span><span class="unit">元</span></div>
+    </div>
+  </div>
+
+  <!-- 主按钮 -->
+  <button class="add-main" onclick="quickAdd()">
+    <span>+1单</span>
+    <span class="arrow">→</span>
+    <span>+<span id="unitPrice">4</span>元</span>
+    <span class="price-hint">（单击）</span>
+  </button>
+
+  <!-- 自定义录入 -->
+  <div class="custom-row">
+    <input type="number" id="customAmt" placeholder="金额" inputmode="decimal">
+    <input type="number" id="customCnt" placeholder="人数" inputmode="numeric" value="1">
+    <button class="add-custom" onclick="customAdd()">记账</button>
+  </div>
+
+  <!-- Tab -->
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="overview" onclick="switchTab('overview')">总览</button>
+    <button class="tab-btn" data-tab="chart" onclick="switchTab('chart')">图表</button>
+    <button class="tab-btn" data-tab="log" onclick="switchTab('log')">流水</button>
+    <button class="tab-btn" data-tab="calendar" onclick="switchTab('calendar')">日历</button>
+  </div>
+
+  <!-- 总览 -->
+  <div class="section active" id="sec-overview">
+    <div class="stat-grid">
+      <div class="stat-card">
+        <div class="lbl">本周合计</div>
+        <div class="num"><span id="weekAmt">0</span><span class="unit">元</span></div>
+        <div class="sub" id="weekSub">— 单</div>
+      </div>
+      <div class="stat-card">
+        <div class="lbl">上周合计</div>
+        <div class="num" style="color:#8a7563;"><span id="lastWeekAmt">0</span><span class="unit">元</span></div>
+        <div class="sub" id="weekCompare">对比 —</div>
+      </div>
+      <div class="stat-card">
+        <div class="lbl">本月合计</div>
+        <div class="num"><span id="monthAmt">0</span><span class="unit">元</span></div>
+        <div class="sub" id="monthSub">— 单</div>
+      </div>
+      <div class="stat-card">
+        <div class="lbl">累计总额</div>
+        <div class="num" style="color:#f5c98a;"><span id="totalAmt">0</span><span class="unit">元</span></div>
+        <div class="sub" id="totalSub">— 单 · — 天</div>
+      </div>
+      <div class="stat-card">
+        <div class="lbl">日均</div>
+        <div class="num"><span id="avgDay">0</span><span class="unit">元</span></div>
+        <div class="sub">按有营业的天算</div>
+      </div>
+      <div class="stat-card">
+        <div class="lbl">最高单日</div>
+        <div class="num good"><span id="bestDay">0</span><span class="unit">元</span></div>
+        <div class="sub" id="bestDayDate">—</div>
+      </div>
+    </div>
+
+    <!-- 累计分账大卡 -->
+    <div class="chart-box">
+      <h3>累计分账 <span class="hint">按当前比例</span></h3>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+        <div>
+          <div style="font-size:11px;color:#8a7563;margin-bottom:4px;"><span id="totalName1">料料</span></div>
+          <div style="font-size:26px;font-weight:600;color:#f5c98a;font-variant-numeric:tabular-nums;">
+            <span id="totalSplit1">0</span><span style="font-size:13px;color:#7a6a5c;font-weight:400;">元</span>
+          </div>
+        </div>
+        <div>
+          <div style="font-size:11px;color:#8a7563;margin-bottom:4px;"><span id="totalName2">容容</span></div>
+          <div style="font-size:26px;font-weight:600;color:#e8ddd0;font-variant-numeric:tabular-nums;">
+            <span id="totalSplit2">0</span><span style="font-size:13px;color:#7a6a5c;font-weight:400;">元</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 图表 -->
+  <div class="section" id="sec-chart">
+    <div class="chart-box">
+      <h3>近14天流水 <span class="hint">折线</span></h3>
+      <canvas id="chartLine"></canvas>
+    </div>
+    <div class="chart-box">
+      <h3>本周 vs 上周 <span class="hint">按日对比</span></h3>
+      <canvas id="chartWeek"></canvas>
+    </div>
+    <div class="chart-box">
+      <h3>近7天客单量 <span class="hint">柱状</span></h3>
+      <canvas id="chartBar"></canvas>
+    </div>
+    <div class="chart-box">
+      <h3>近12周趋势 <span class="hint">周合计</span></h3>
+      <canvas id="chartWeekly"></canvas>
+    </div>
+  </div>
+
+  <!-- 流水 -->
+  <div class="section" id="sec-log">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;padding:0 4px;">
+      <span style="font-size:12px;color:#7a6a5c;letter-spacing:1px;" id="logTitle">今日记录</span>
+      <select id="logFilter" onchange="renderLog()" style="background:#241a14;border:1px solid #3a2c22;color:#b09b85;padding:6px 10px;border-radius:8px;font-size:12px;font-family:inherit;outline:none;">
+        <option value="today">今日</option>
+        <option value="week">本周</option>
+        <option value="month">本月</option>
+        <option value="all">全部</option>
+      </select>
+    </div>
+    <div class="log-list" id="logList"></div>
+  </div>
+
+  <!-- 日历热力 -->
+  <div class="section" id="sec-calendar">
+    <div class="chart-box">
+      <h3>近8周热力图 <span class="hint">颜色越深流水越多</span></h3>
+      <div class="heat-days">
+        <div>一</div><div>二</div><div>三</div><div>四</div><div>五</div><div>六</div><div>日</div>
+      </div>
+      <div class="heatmap" id="heatmap"></div>
+    </div>
+    <div class="chart-box">
+      <h3>营业统计</h3>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:13px;">
+        <div style="padding:8px 0;">
+          <div style="color:#7a6a5c;font-size:11px;">营业天数</div>
+          <div style="color:#e8ddd0;font-size:18px;font-weight:600;"><span id="daysActive">0</span> 天</div>
+        </div>
+        <div style="padding:8px 0;">
+          <div style="color:#7a6a5c;font-size:11px;">连续营业</div>
+          <div style="color:#e8ddd0;font-size:18px;font-weight:600;"><span id="daysStreak">0</span> 天</div>
+        </div>
+        <div style="padding:8px 0;">
+          <div style="color:#7a6a5c;font-size:11px;">最佳周</div>
+          <div style="color:#a8d495;font-size:16px;font-weight:600;"><span id="bestWeek">0</span> 元</div>
+        </div>
+        <div style="padding:8px 0;">
+          <div style="color:#7a6a5c;font-size:11px;">最佳月</div>
+          <div style="color:#a8d495;font-size:16px;font-weight:600;"><span id="bestMonth">0</span> 元</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer-tip">数据存本地 · 别清缓存 · 记得导出备份</div>
+</div>
+
+<!-- 撤销悬浮按钮 -->
+<button class="undo-fab" id="undoFab" onclick="undoLast()">↶ 撤销</button>
+
+<!-- 设置弹窗 -->
+<div class="modal-bg" id="modal" onclick="if(event.target===this)closeSettings()">
+  <div class="modal">
+    <h2>设置 <button class="close" onclick="closeSettings()">×</button></h2>
+
+    <div class="field">
+      <label>单击默认金额（元）</label>
+      <input type="number" id="setUnitPrice" step="0.5">
+    </div>
+
+    <div class="field">
+      <label>分账比例（合计需=10）</label>
+      <div class="split-inputs">
+        <input type="number" id="setRatio1" placeholder="料料" step="0.1">
+        <input type="number" id="setRatio2" placeholder="容容" step="0.1">
+      </div>
+    </div>
+
+    <div class="field">
+      <label>快捷比例切换</label>
+      <select id="setRatioPreset" onchange="applyPreset()">
+        <option value="">— 选一个预设 —</option>
+        <option value="6,4">四六分（料6 · 容4）</option>
+        <option value="4,6">四六分反过来（料4 · 容6）</option>
+        <option value="7,3">三七分（料7 · 容3）</option>
+        <option value="3,7">三七分反过来（料3 · 容7）</option>
+        <option value="5,5">五五分</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label>名字</label>
+      <div class="split-inputs">
+        <input type="text" id="setName1" placeholder="人1">
+        <input type="text" id="setName2" placeholder="人2">
+      </div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn-primary" onclick="saveSettings()">保存</button>
+      <button class="btn-ghost" onclick="closeSettings()">取消</button>
+    </div>
+
+    <hr style="border:none;border-top:1px solid #3a2c22;margin:20px 0;">
+
+    <div class="field">
+      <label>数据管理</label>
+      <div class="btn-row" style="margin-top:0;">
+        <button class="btn-ghost" onclick="exportData()">导出</button>
+        <button class="btn-ghost" onclick="document.getElementById('importFile').click()">导入</button>
+      </div>
+      <input type="file" id="importFile" accept=".json" style="display:none;" onchange="importData(event)">
+    </div>
+
+    <div class="btn-row">
+      <button class="btn-danger" onclick="clearAll()">清空所有数据</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ========== 数据层 ========== */
+const KEY_DATA = 'zhangben_data_v1';
+const KEY_CFG = 'zhangben_cfg_v1';
+
+let state = {
+  entries: [], // { id, ts, amount, count }
+  lastAction: null // 用于撤销
+};
+
+let cfg = {
+  unitPrice: 4,
+  ratio: [6, 4],
+  names: ['料料', '容容']
+};
+
+function loadData() {
+  try {
+    const d = localStorage.getItem(KEY_DATA);
+    if (d) state.entries = JSON.parse(d) || [];
+    const c = localStorage.getItem(KEY_CFG);
+    if (c) cfg = { ...cfg, ...JSON.parse(c) };
+  } catch(e) {}
+}
+
+function saveData() {
+  try {
+    localStorage.setItem(KEY_DATA, JSON.stringify(state.entries));
+    localStorage.setItem(KEY_CFG, JSON.stringify(cfg));
+  } catch(e) {
+    toast('存储失败！可能是隐私模式或空间满');
+  }
+}
+
+/* ========== 工具 ========== */
+function dayKey(ts) {
+  const d = new Date(ts);
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+function startOfDay(ts) {
+  const d = new Date(ts); d.setHours(0,0,0,0); return d.getTime();
+}
+function startOfWeek(ts) {
+  // 周一为起点
+  const d = new Date(ts);
+  d.setHours(0,0,0,0);
+  const dow = d.getDay(); // 0=Sun
+  const diff = dow === 0 ? -6 : 1 - dow;
+  d.setDate(d.getDate() + diff);
+  return d.getTime();
+}
+function startOfMonth(ts) {
+  const d = new Date(ts); d.setHours(0,0,0,0); d.setDate(1); return d.getTime();
+}
+function fmt(n) {
+  if (Number.isInteger(n)) return n.toString();
+  return n.toFixed(2).replace(/\.?0+$/, '');
+}
+function fmtTime(ts) {
+  const d = new Date(ts);
+  return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+}
+function fmtDate(ts) {
+  const d = new Date(ts);
+  return `${d.getMonth()+1}/${d.getDate()}`;
+}
+
+/* ========== 操作 ========== */
+function addEntry(amount, count) {
+  if (!amount || amount <= 0) { toast('金额得大于0'); return; }
+  count = count || 1;
+  const entry = {
+    id: Date.now() + '_' + Math.random().toString(36).slice(2,7),
+    ts: Date.now(),
+    amount: +amount,
+    count: +count
+  };
+  state.entries.push(entry);
+  state.lastAction = { type: 'add', entry };
+  saveData();
+  renderAll();
+  showUndoFab();
+}
+
+function quickAdd() {
+  addEntry(cfg.unitPrice, 1);
+  toast(`+${cfg.unitPrice}元 · +1单`);
+}
+
+function customAdd() {
+  const amt = parseFloat(document.getElementById('customAmt').value);
+  const cnt = parseInt(document.getElementById('customCnt').value) || 1;
+  if (!amt) { toast('填个金额'); return; }
+  addEntry(amt, cnt);
+  toast(`+${fmt(amt)}元 · +${cnt}单`);
+  document.getElementById('customAmt').value = '';
+  document.getElementById('customCnt').value = '1';
+}
+
+function deleteEntry(id) {
+  const idx = state.entries.findIndex(e => e.id === id);
+  if (idx < 0) return;
+  const entry = state.entries[idx];
+  state.entries.splice(idx, 1);
+  state.lastAction = { type: 'delete', entry, idx };
+  saveData();
+  renderAll();
+  showUndoFab();
+  toast('已删除');
+}
+
+function undoLast() {
+  if (!state.lastAction) return;
+  if (state.lastAction.type === 'add') {
+    const id = state.lastAction.entry.id;
+    state.entries = state.entries.filter(e => e.id !== id);
+    toast('撤回了');
+  } else if (state.lastAction.type === 'delete') {
+    state.entries.splice(state.lastAction.idx, 0, state.lastAction.entry);
+    toast('恢复了');
+  }
+  state.lastAction = null;
+  saveData();
+  renderAll();
+  document.getElementById('undoFab').classList.remove('show');
+}
+
+let undoTimer;
+function showUndoFab() {
+  const fab = document.getElementById('undoFab');
+  fab.classList.add('show');
+  clearTimeout(undoTimer);
+  undoTimer = setTimeout(() => fab.classList.remove('show'), 5000);
+}
+
+/* ========== 渲染 ========== */
+function renderAll() {
+  renderTop();
+  renderStats();
+  renderLog();
+  renderCharts();
+  renderHeatmap();
+}
+
+function renderTop() {
+  const now = Date.now();
+  const sod = startOfDay(now);
+  const eod = sod + 86400000;
+  const todayEntries = state.entries.filter(e => e.ts >= sod && e.ts < eod);
+  const todayAmt = todayEntries.reduce((s,e) => s + e.amount, 0);
+  const todayCnt = todayEntries.reduce((s,e) => s + e.count, 0);
+  const avg = todayCnt > 0 ? todayAmt / todayCnt : 0;
+
+  document.getElementById('todayAmt').textContent = fmt(todayAmt);
+  document.getElementById('todayCount').textContent = todayCnt;
+  document.getElementById('todayAvg').textContent = fmt(avg);
+
+  // 分账
+  const r1 = cfg.ratio[0] / (cfg.ratio[0] + cfg.ratio[1]);
+  const r2 = 1 - r1;
+  document.getElementById('split1').textContent = fmt(todayAmt * r1);
+  document.getElementById('split2').textContent = fmt(todayAmt * r2);
+  document.getElementById('name1').textContent = cfg.names[0];
+  document.getElementById('name2').textContent = cfg.names[1];
+  document.getElementById('pct1').textContent = Math.round(r1*100) + '%';
+  document.getElementById('pct2').textContent = Math.round(r2*100) + '%';
+  document.getElementById('totalName1').textContent = cfg.names[0];
+  document.getElementById('totalName2').textContent = cfg.names[1];
+
+  document.getElementById('unitPrice').textContent = cfg.unitPrice;
+
+  // 昨日对比
+  const ysod = sod - 86400000;
+  const ydayEntries = state.entries.filter(e => e.ts >= ysod && e.ts < sod);
+  const ydayAmt = ydayEntries.reduce((s,e) => s + e.amount, 0);
+  const vsEl = document.getElementById('todayVs');
+  if (ydayAmt > 0) {
+    const diff = todayAmt - ydayAmt;
+    const pct = ((diff / ydayAmt) * 100).toFixed(0);
+    const sign = diff >= 0 ? '↑' : '↓';
+    const color = diff >= 0 ? '#a8d495' : '#e8938a';
+    vsEl.innerHTML = `<span style="color:${color}">${sign}${Math.abs(pct)}%</span> vs 昨日`;
+  } else {
+    vsEl.textContent = '';
+  }
+}
+
+function renderStats() {
+  const now = Date.now();
+  const r1 = cfg.ratio[0] / (cfg.ratio[0] + cfg.ratio[1]);
+
+  // 本周
+  const sow = startOfWeek(now);
+  const weekEntries = state.entries.filter(e => e.ts >= sow);
+  const weekAmt = weekEntries.reduce((s,e) => s + e.amount, 0);
+  const weekCnt = weekEntries.reduce((s,e) => s + e.count, 0);
+  document.getElementById('weekAmt').textContent = fmt(weekAmt);
+  document.getElementById('weekSub').textContent = `${weekCnt} 单`;
+
+  // 上周
+  const solw = sow - 7 * 86400000;
+  const lastWeekEntries = state.entries.filter(e => e.ts >= solw && e.ts < sow);
+  const lastWeekAmt = lastWeekEntries.reduce((s,e) => s + e.amount, 0);
+  document.getElementById('lastWeekAmt').textContent = fmt(lastWeekAmt);
+
+  const cmpEl = document.getElementById('weekCompare');
+  if (lastWeekAmt > 0) {
+    const diff = weekAmt - lastWeekAmt;
+    const pct = ((diff / lastWeekAmt) * 100).toFixed(0);
+    const color = diff >= 0 ? '#a8d495' : '#e8938a';
+    cmpEl.innerHTML = `<span style="color:${color}">${diff>=0?'↑':'↓'}${Math.abs(pct)}%</span>`;
+  } else {
+    cmpEl.textContent = '无上周数据';
+  }
+
+  // 本月
+  const som = startOfMonth(now);
+  const monthEntries = state.entries.filter(e => e.ts >= som);
+  const monthAmt = monthEntries.reduce((s,e) => s + e.amount, 0);
+  const monthCnt = monthEntries.reduce((s,e) => s + e.count, 0);
+  document.getElementById('monthAmt').textContent = fmt(monthAmt);
+  document.getElementById('monthSub').textContent = `${monthCnt} 单`;
+
+  // 累计
+  const totalAmt = state.entries.reduce((s,e) => s + e.amount, 0);
+  const totalCnt = state.entries.reduce((s,e) => s + e.count, 0);
+  const dayKeys = new Set(state.entries.map(e => dayKey(e.ts)));
+  const daysActive = dayKeys.size;
+  document.getElementById('totalAmt').textContent = fmt(totalAmt);
+  document.getElementById('totalSub').textContent = `${totalCnt} 单 · ${daysActive} 天`;
+
+  // 日均
+  const avgDay = daysActive > 0 ? totalAmt / daysActive : 0;
+  document.getElementById('avgDay').textContent = fmt(avgDay);
+
+  // 最高单日
+  const dayMap = {};
+  state.entries.forEach(e => {
+    const k = dayKey(e.ts);
+    dayMap[k] = (dayMap[k] || 0) + e.amount;
+  });
+  let bestDayAmt = 0, bestDayKey = '';
+  for (const k in dayMap) {
+    if (dayMap[k] > bestDayAmt) { bestDayAmt = dayMap[k]; bestDayKey = k; }
+  }
+  document.getElementById('bestDay').textContent = fmt(bestDayAmt);
+  document.getElementById('bestDayDate').textContent = bestDayKey ? bestDayKey.slice(5).replace('-','/') : '—';
+
+  // 累计分账
+  document.getElementById('totalSplit1').textContent = fmt(totalAmt * r1);
+  document.getElementById('totalSplit2').textContent = fmt(totalAmt * (1-r1));
+
+  // 营业统计
+  document.getElementById('daysActive').textContent = daysActive;
+
+  // 连续营业
+  let streak = 0;
+  let checkTs = startOfDay(now);
+  while (dayMap[dayKey(checkTs)]) {
+    streak++;
+    checkTs -= 86400000;
+  }
+  document.getElementById('daysStreak').textContent = streak;
+
+  // 最佳周
+  const weekMap = {};
+  state.entries.forEach(e => {
+    const k = startOfWeek(e.ts);
+    weekMap[k] = (weekMap[k] || 0) + e.amount;
+  });
+  const bestWeek = Math.max(0, ...Object.values(weekMap));
+  document.getElementById('bestWeek').textContent = fmt(bestWeek);
+
+  // 最佳月
+  const monthMap = {};
+  state.entries.forEach(e => {
+    const d = new Date(e.ts);
+    const k = `${d.getFullYear()}-${d.getMonth()}`;
+    monthMap[k] = (monthMap[k] || 0) + e.amount;
+  });
+  const bestMonth = Math.max(0, ...Object.values(monthMap));
+  document.getElementById('bestMonth').textContent = fmt(bestMonth);
+}
+
+function renderLog() {
+  const filter = document.getElementById('logFilter').value;
+  const now = Date.now();
+  let start = 0;
+  let title = '';
+  if (filter === 'today') { start = startOfDay(now); title = '今日记录'; }
+  else if (filter === 'week') { start = startOfWeek(now); title = '本周记录'; }
+  else if (filter === 'month') { start = startOfMonth(now); title = '本月记录'; }
+  else { start = 0; title = '全部记录'; }
+  document.getElementById('logTitle').textContent = title;
+
+  const list = state.entries.filter(e => e.ts >= start).sort((a,b) => b.ts - a.ts);
+  const el = document.getElementById('logList');
+  if (list.length === 0) {
+    el.innerHTML = '<div class="log-empty">还没有记录</div>';
+    return;
+  }
+  el.innerHTML = list.map(e => {
+    const d = new Date(e.ts);
+    const timeStr = filter === 'today'
+      ? fmtTime(e.ts)
+      : `${d.getMonth()+1}/${d.getDate()} ${fmtTime(e.ts)}`;
+    return `
+      <div class="log-item">
+        <span class="time">${timeStr}</span>
+        <span class="mid">
+          <span class="amt">+${fmt(e.amount)}元</span>
+          <span class="cnt">/${e.count}单</span>
+        </span>
+        <button class="del" onclick="deleteEntry('${e.id}')">×</button>
+      </div>
+    `;
+  }).join('');
+}
+
+/* ========== 图表 ========== */
+let charts = {};
+
+function makeChart(id, config) {
+  if (charts[id]) charts[id].destroy();
+  const ctx = document.getElementById(id).getContext('2d');
+  charts[id] = new Chart(ctx, config);
+}
+
+const CHART_COLORS = {
+  main: '#f5c98a',
+  mainBg: 'rgba(245, 201, 138, 0.15)',
+  sec: '#8a7563',
+  grid: 'rgba(122, 106, 92, 0.15)',
+  text: '#8a7563'
+};
+
+function renderCharts() {
+  if (typeof Chart === 'undefined') return;
+  Chart.defaults.color = CHART_COLORS.text;
+  Chart.defaults.font.family = "-apple-system, BlinkMacSystemFont, 'PingFang SC', sans-serif";
+  Chart.defaults.font.size = 10;
+
+  // 近14天折线
+  const days14 = [];
+  const now = Date.now();
+  const sod = startOfDay(now);
+  for (let i = 13; i >= 0; i--) {
+    const d = sod - i * 86400000;
+    const amt = state.entries
+      .filter(e => e.ts >= d && e.ts < d + 86400000)
+      .reduce((s,e) => s + e.amount, 0);
+    days14.push({ date: fmtDate(d), amt });
+  }
+  makeChart('chartLine', {
+    type: 'line',
+    data: {
+      labels: days14.map(d => d.date),
+      datasets: [{
+        data: days14.map(d => d.amt),
+        borderColor: CHART_COLORS.main,
+        backgroundColor: CHART_COLORS.mainBg,
+        borderWidth: 2,
+        fill: true,
+        tension: 0.35,
+        pointRadius: 3,
+        pointBackgroundColor: CHART_COLORS.main,
+        pointBorderWidth: 0
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        y: { grid: { color: CHART_COLORS.grid }, ticks: { color: CHART_COLORS.text } },
+        x: { grid: { display: false }, ticks: { color: CHART_COLORS.text, maxRotation: 0 } }
+      }
+    }
+  });
+
+  // 本周vs上周（按周一到周日）
+  const sow = startOfWeek(now);
+  const thisWeek = [], lastWeek = [];
+  const weekLabels = ['一','二','三','四','五','六','日'];
+  for (let i = 0; i < 7; i++) {
+    const d1 = sow + i * 86400000;
+    const d2 = d1 - 7 * 86400000;
+    thisWeek.push(state.entries.filter(e => e.ts >= d1 && e.ts < d1 + 86400000).reduce((s,e)=>s+e.amount,0));
+    lastWeek.push(state.entries.filter(e => e.ts >= d2 && e.ts < d2 + 86400000).reduce((s,e)=>s+e.amount,0));
+  }
+  makeChart('chartWeek', {
+    type: 'bar',
+    data: {
+      labels: weekLabels,
+      datasets: [
+        { label: '上周', data: lastWeek, backgroundColor: '#5a4a3a', borderRadius: 4 },
+        { label: '本周', data: thisWeek, backgroundColor: CHART_COLORS.main, borderRadius: 4 }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: true, position: 'top', labels: { boxWidth: 10, padding: 8, font: {size: 11}}}
+      },
+      scales: {
+        y: { grid: { color: CHART_COLORS.grid }, ticks: { color: CHART_COLORS.text } },
+        x: { grid: { display: false }, ticks: { color: CHART_COLORS.text } }
+      }
+    }
+  });
+
+  // 近7天客单量
+  const days7 = [];
+  for (let i = 6; i >= 0; i--) {
+    const d = sod - i * 86400000;
+    const cnt = state.entries
+      .filter(e => e.ts >= d && e.ts < d + 86400000)
+      .reduce((s,e) => s + e.count, 0);
+    days7.push({ date: fmtDate(d), cnt });
+  }
+  makeChart('chartBar', {
+    type: 'bar',
+    data: {
+      labels: days7.map(d => d.date),
+      datasets: [{
+        data: days7.map(d => d.cnt),
+        backgroundColor: CHART_COLORS.main,
+        borderRadius: 6
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        y: { grid: { color: CHART_COLORS.grid }, ticks: { color: CHART_COLORS.text, precision: 0 } },
+        x: { grid: { display: false }, ticks: { color: CHART_COLORS.text } }
+      }
+    }
+  });
+
+  // 近12周
+  const weeks12 = [];
+  for (let i = 11; i >= 0; i--) {
+    const wStart = sow - i * 7 * 86400000;
+    const wEnd = wStart + 7 * 86400000;
+    const amt = state.entries.filter(e => e.ts >= wStart && e.ts < wEnd).reduce((s,e)=>s+e.amount,0);
+    weeks12.push({ label: fmtDate(wStart), amt });
+  }
+  makeChart('chartWeekly', {
+    type: 'line',
+    data: {
+      labels: weeks12.map(w => w.label),
+      datasets: [{
+        data: weeks12.map(w => w.amt),
+        borderColor: CHART_COLORS.main,
+        backgroundColor: CHART_COLORS.mainBg,
+        borderWidth: 2,
+        fill: true,
+        tension: 0.3,
+        pointRadius: 3,
+        pointBackgroundColor: CHART_COLORS.main,
+        pointBorderWidth: 0
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        y: { grid: { color: CHART_COLORS.grid }, ticks: { color: CHART_COLORS.text } },
+        x: { grid: { display: false }, ticks: { color: CHART_COLORS.text, maxRotation: 0 } }
+      }
+    }
+  });
+}
+
+/* ========== 热力图 ========== */
+function renderHeatmap() {
+  const now = Date.now();
+  const sod = startOfDay(now);
+  const sow = startOfWeek(now);
+  const dayMap = {};
+  state.entries.forEach(e => {
+    const k = dayKey(e.ts);
+    dayMap[k] = (dayMap[k] || 0) + e.amount;
+  });
+
+  // 找最大值
+  const maxAmt = Math.max(0, ...Object.values(dayMap));
+
+  // 8周，从当前周向前
+  const cells = [];
+  for (let w = 7; w >= 0; w--) {
+    for (let d = 0; d < 7; d++) {
+      const ts = sow - w * 7 * 86400000 + d * 86400000;
+      const k = dayKey(ts);
+      const amt = dayMap[k] || 0;
+      let level = 0;
+      if (maxAmt > 0) {
+        const ratio = amt / maxAmt;
+        if (ratio > 0.75) level = 4;
+        else if (ratio > 0.5) level = 3;
+        else if (ratio > 0.25) level = 2;
+        else if (ratio > 0) level = 1;
+      }
+      const isToday = ts === sod;
+      cells.push({ ts, amt, level, isToday, k });
+    }
+  }
+
+  document.getElementById('heatmap').innerHTML = cells.map(c => {
+    const d = new Date(c.ts);
+    return `<div class="heat-cell${c.isToday?' today':''}" data-level="${c.level}" title="${c.k}: ${fmt(c.amt)}元">${d.getDate()}</div>`;
+  }).join('');
+}
+
+/* ========== Tab ========== */
+function switchTab(name) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === name));
+  document.querySelectorAll('.section').forEach(s => s.classList.toggle('active', s.id === 'sec-' + name));
+  if (name === 'chart') renderCharts(); // 图表 tab 才画
+}
+
+/* ========== 设置 ========== */
+function openSettings() {
+  document.getElementById('setUnitPrice').value = cfg.unitPrice;
+  document.getElementById('setRatio1').value = cfg.ratio[0];
+  document.getElementById('setRatio2').value = cfg.ratio[1];
+  document.getElementById('setName1').value = cfg.names[0];
+  document.getElementById('setName2').value = cfg.names[1];
+  document.getElementById('modal').classList.add('show');
+}
+function closeSettings() {
+  document.getElementById('modal').classList.remove('show');
+}
+function applyPreset() {
+  const val = document.getElementById('setRatioPreset').value;
+  if (!val) return;
+  const [a, b] = val.split(',').map(Number);
+  document.getElementById('setRatio1').value = a;
+  document.getElementById('setRatio2').value = b;
+}
+function saveSettings() {
+  const up = parseFloat(document.getElementById('setUnitPrice').value);
+  const r1 = parseFloat(document.getElementById('setRatio1').value);
+  const r2 = parseFloat(document.getElementById('setRatio2').value);
+  const n1 = document.getElementById('setName1').value.trim();
+  const n2 = document.getElementById('setName2').value.trim();
+  if (!up || up <= 0) { toast('单价不对'); return; }
+  if (!r1 || !r2 || r1 <= 0 || r2 <= 0) { toast('比例填一下'); return; }
+  cfg.unitPrice = up;
+  cfg.ratio = [r1, r2];
+  cfg.names = [n1 || '料料', n2 || '容容'];
+  saveData();
+  renderAll();
+  closeSettings();
+  toast('保存啦');
+}
+
+/* ========== 数据管理 ========== */
+function exportData() {
+  const data = {
+    version: 1,
+    exportedAt: new Date().toISOString(),
+    cfg,
+    entries: state.entries
+  };
+  const blob = new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `账本_${dayKey(Date.now())}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  toast('已导出');
+}
+
+function importData(ev) {
+  const file = ev.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (!data.entries || !Array.isArray(data.entries)) throw new Error('格式不对');
+      if (!confirm(`即将导入 ${data.entries.length} 条记录，会覆盖当前数据。确定吗？`)) return;
+      state.entries = data.entries;
+      if (data.cfg) cfg = { ...cfg, ...data.cfg };
+      saveData();
+      renderAll();
+      closeSettings();
+      toast('导入成功');
+    } catch(err) {
+      toast('文件不对劲：' + err.message);
+    }
+  };
+  reader.readAsText(file);
+  ev.target.value = '';
+}
+
+function clearAll() {
+  if (!confirm('确定清空所有账目？这个撤不回来。')) return;
+  if (!confirm('真的要清空？最后一次确认。')) return;
+  state.entries = [];
+  state.lastAction = null;
+  saveData();
+  renderAll();
+  closeSettings();
+  toast('已清空');
+}
+
+/* ========== Toast ========== */
+let toastTimer;
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 1600);
+}
+
+/* ========== 启动 ========== */
+loadData();
+renderAll();
+
+// 每分钟检查一下（跨天时刷新）
+setInterval(() => {
+  renderTop();
+  renderStats();
+}, 60000);
+</script>
+</body>
+</html>
